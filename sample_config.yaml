@@ -1,0 +1,11 @@
+accounts: 
+  - api_key: <your key>
+    submission_interval: 1
+    jobs:
+
+      - id: Random board
+        plugin: random
+        config:
+          board:
+            name: Random Board Test 3
+            prefix: random_3
