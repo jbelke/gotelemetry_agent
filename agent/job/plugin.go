@@ -13,9 +13,7 @@ type PluginInstance interface {
 	Terminate(job *Job)
 }
 
-type PluginFactory interface {
-	NewInstance() PluginInstance
-}
+type PluginFactory func() PluginInstance
 
 // Manager
 

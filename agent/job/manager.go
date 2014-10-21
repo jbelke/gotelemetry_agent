@@ -63,7 +63,7 @@ func NewJobManager(config config.ConfigInterface, errorChannel *chan error) (*Jo
 				return nil, err
 			}
 
-			pluginInstance := pluginFactory.NewInstance()
+			pluginInstance := pluginFactory()
 
 			job, err := newJob(credentials, accountStream, jobDescription.ID, jobDescription.Config, pluginInstance, errorChannel)
 

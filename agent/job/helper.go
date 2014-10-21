@@ -53,11 +53,11 @@ func (e *PluginHelper) AddTaskWithClosure(c PluginHelperClosure, interval time.D
 	e.AddTask(t)
 }
 
-func (e *PluginHelper) AddTaskWithClosureForFlowWithName(c PluginHelperClosureWithFlow, interval time.Duration, flows map[string]*gotelemetry.Flow, name, prefix string) error {
-	f, found := flows[prefix+name]
+func (e *PluginHelper) AddTaskWithClosureForFlowWithTag(c PluginHelperClosureWithFlow, interval time.Duration, flows map[string]*gotelemetry.Flow, tag string) error {
+	f, found := flows[tag]
 
 	if !found {
-		return gotelemetry.NewError(400, "Flow "+prefix+name+" not found.")
+		return gotelemetry.NewError(400, "Flow "+tag+" not found.")
 	}
 
 	closure := func(job *Job) {
@@ -67,6 +67,16 @@ func (e *PluginHelper) AddTaskWithClosureForFlowWithName(c PluginHelperClosureWi
 	e.AddTaskWithClosure(closure, interval)
 
 	return nil
+}
+
+func (e *PluginHelper) AddTaskWithClosureFromBoardForFlowWithTag(c PluginHelperClosureWithFlow, interval time.Duration, b *gotelemetry.Board, tag string) error {
+	flows, err := b.MapWidgetsToFlows()
+
+	if err != nil {
+		return err
+	}
+
+	return e.AddTaskWithClosureForFlowWithTag(c, interval, flows, tag)
 }
 
 func (e *PluginHelper) Run(job *Job) {
