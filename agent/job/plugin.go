@@ -7,7 +7,7 @@ import (
 // Interfaces
 
 type PluginInstance interface {
-	Init(job *Job, config map[string]interface{}) error
+	Init(job *Job) error
 	Run(job *Job)
 	Reconfigure(job *Job, config map[string]interface{}) error
 	Terminate(job *Job)

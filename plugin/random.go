@@ -18,7 +18,6 @@ func init() {
 func RandomPluginFactory() job.PluginInstance {
 	return &RandomPlugin{
 		job.NewPluginHelper(),
-		map[string]interface{}{},
 	}
 }
 
@@ -29,7 +28,6 @@ func RandomPluginFactory() job.PluginInstance {
 // the plugin itself.
 type RandomPlugin struct {
 	*job.PluginHelper
-	config map[string]interface{}
 }
 
 // Init initializes the plugin. Perform whatever initialization you need here.
@@ -45,8 +43,8 @@ type RandomPlugin struct {
 // 2. Create any boards or flows you need.
 // 3. If you are using a PluginHelper as the base for your plugin, you will probably
 //    want to register your tasks at this point.
-func (r *RandomPlugin) Init(job *job.Job, config map[string]interface{}) error {
-	r.config = config
+func (r *RandomPlugin) Init(job *job.Job) error {
+	config := job.Config()
 
 	// Phase 1: Read configuration
 

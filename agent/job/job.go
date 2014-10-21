@@ -17,6 +17,7 @@ type Job struct {
 	stream       *gotelemetry.BatchStream // The batch stream used by the job. This is likewide not exposed to the plugin
 	instance     PluginInstance           // The plugin instance
 	errorChannel *chan error              // A channel to which all errors are funneled
+	config       map[string]interface{}   // The configuration associated with the job
 }
 
 // newJob creates and starts a new Job
@@ -27,16 +28,17 @@ func newJob(credentials gotelemetry.Credentials, stream *gotelemetry.BatchStream
 		stream:       stream,
 		instance:     instance,
 		errorChannel: errorChannel,
+		config:       config,
 	}
 
-	go result.start(config)
+	go result.start()
 
 	return result, nil
 }
 
 // start starts a job. It must be executed asychronously in its own goroutine
-func (j *Job) start(config map[string]interface{}) {
-	err := j.instance.Init(j, config)
+func (j *Job) start() {
+	err := j.instance.Init(j)
 
 	if err != nil {
 		println("Error initializing " + j.ID)
@@ -47,6 +49,11 @@ func (j *Job) start(config map[string]interface{}) {
 	}
 
 	j.instance.Run(j)
+}
+
+// Retrieve the configuration data associated with this job
+func (j *Job) Config() map[string]interface{} {
+	return j.config
 }
 
 // GetOrCreateBoard either creates a board based on an exported template, or retrieves it
