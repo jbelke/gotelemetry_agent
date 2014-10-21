@@ -18,6 +18,7 @@ func init() {
 func RandomPluginFactory() job.PluginInstance {
 	return &RandomPlugin{
 		job.NewPluginHelper(),
+		map[string]interface{}{},
 	}
 }
 
@@ -28,6 +29,7 @@ func RandomPluginFactory() job.PluginInstance {
 // the plugin itself.
 type RandomPlugin struct {
 	*job.PluginHelper
+	config map[string]interface{}
 }
 
 // Init initializes the plugin. Perform whatever initialization you need here.
@@ -44,6 +46,7 @@ type RandomPlugin struct {
 // 3. If you are using a PluginHelper as the base for your plugin, you will probably
 //    want to register your tasks at this point.
 func (r *RandomPlugin) Init(job *job.Job, config map[string]interface{}) error {
+	r.config = config
 
 	// Phase 1: Read configuration
 
@@ -68,11 +71,11 @@ func (r *RandomPlugin) Init(job *job.Job, config map[string]interface{}) error {
 	// Phase 3: Since we use a plugin helper, ask it to execute our update function on
 	// a schedule until the plugin is terminated
 
-	if err = r.PluginHelper.AddTaskWithClosureFromBoardForFlowWithTag(FeedValueFlow, time.Second*5, b, "value_98"); err != nil {
+	if err = r.PluginHelper.AddTaskWithClosureFromBoardForFlowWithTag(r.FeedValueFlow, time.Second*5, b, "value_98"); err != nil {
 		return err
 	}
 
-	if err = r.PluginHelper.AddTaskWithClosureFromBoardForFlowWithTag(FeedValueFlow, time.Second*7, b, "value_99"); err != nil {
+	if err = r.PluginHelper.AddTaskWithClosureFromBoardForFlowWithTag(r.FeedValueFlow, time.Second*7, b, "value_99"); err != nil {
 		return err
 	}
 
@@ -93,7 +96,7 @@ func (r *RandomPlugin) Init(job *job.Job, config map[string]interface{}) error {
 //    inevitably overwrite each other
 // 2. Avoid writing directly to common structs or global variables that
 //    may be used by another task.
-func FeedValueFlow(job *job.Job, f *gotelemetry.Flow) {
+func (r *RandomPlugin) FeedValueFlow(job *job.Job, f *gotelemetry.Flow) {
 	data, err := f.ValueData()
 
 	if !err {
