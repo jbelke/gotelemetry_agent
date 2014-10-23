@@ -113,6 +113,6 @@ func (j *Job) Log(v ...interface{}) {
 }
 
 // Log sends a formatted string to the agent's global log. It works like log.Logf
-func (j *Job) Logf(format string, v interface{}) {
-	log.Printf("%s -> %s", j.ID, fmt.Sprintf(format, v))
+func (j *Job) Logf(format string, v ...interface{}) {
+	log.Printf("%s -> %s", j.ID, fmt.Sprintf(format, v...))
 }
