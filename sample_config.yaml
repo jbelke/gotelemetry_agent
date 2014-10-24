@@ -4,7 +4,7 @@ accounts:
     jobs:
 
       - id: Random board
-        plugin: random
+        plugin: com.telemetryapp.random
         config:
           board:
             name: Random Board Test 3
