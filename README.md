@@ -34,11 +34,9 @@ The topmost object in the configuration file is an object that contains an array
 
 In addition, each account entry contains a list of jobs, which tell the Agent exactly what you want it to do. A job contains:
 
-- A unique `id` that identifies it. This must be unique across your entire configuration file.
-
-- A `submission_interval` that determines how often data is sent to the Telemetry API. The Agent coalesces updates and sends them at this interval in order to reduce your API usage.
-
-- A `config` hash that contains the configuration for the plugin. The contents of this hash depend on which plugin you use
+  - A unique `id` that identifies it. This must be unique across your entire configuration file.
+  - A `submission_interval` that determines how often data is sent to the Telemetry API. The Agent coalesces updates and sends them at this interval in order to reduce your API usage.
+  - A `config` hash that contains the configuration for the plugin. The contents of this hash depend on which plugin you use
 
 ### Running the Agent
 
