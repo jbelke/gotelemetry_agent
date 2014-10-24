@@ -6,11 +6,14 @@ import (
 
 // Interfaces
 
+// Interface PluginInstance represents an instance of a plugin that is called upon to perform a job.
+//
+// In other words, this is what you are supposed to write.
 type PluginInstance interface {
-	Init(job *Job) error
-	Run(job *Job)
-	Reconfigure(job *Job, config map[string]interface{}) error
-	Terminate(job *Job)
+	Init(job *Job) error                                       // Initializes the instance
+	Run(job *Job)                                              // Runs the instance synchronously until Terminate() is called
+	Reconfigure(job *Job, config map[string]interface{}) error // Dynamically reconfigures the instance, or returns an error if it can't
+	Terminate(job *Job)                                        // Terminates the instance, returning only when its execution is complete
 }
 
 type PluginFactory func() PluginInstance
