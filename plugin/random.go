@@ -11,7 +11,7 @@ import (
 // The plugin provides a RandomPluginFactory that the manager calls whenever it needs
 // to create a new job
 func init() {
-	job.RegisterPlugin("random", RandomPluginFactory)
+	job.RegisterPlugin("com.telemetryapp.random", RandomPluginFactory)
 }
 
 // Func RandomPluginFactory generates a blank plugin instance
