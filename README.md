@@ -4,9 +4,9 @@ The Telemetry Agent simplifies the process of creating daemon processes that fee
 
 Typical use-case scenarios include:
 
-    - Feeding data from existing infrastructure (e.g.: a MySQL database) to a board
-    - Automatically creating boards for your customers
-    - Interfacing third-party APIs with Telemetry
+	- Feeding data from existing infrastructure (e.g.: a MySQL database) to a board
+	- Automatically creating boards for your customers
+	- Interfacing third-party APIs with Telemetry
 
 The Agent is written in Go and runs fine on most Linux distros, OS X, and Windows. It is designed to run on your infrastructure, and its only requirement is that it be able to reach the Telemetry API endpoint (https://api.telemetryapp.com) on port 443 via HTTPS. It can therefore happily live behind firewalls without posing a security risk.
 
@@ -34,9 +34,9 @@ The topmost object in the configuration file is an object that contains an array
 
 In addition, each account entry contains a list of jobs, which tell the Agent exactly what you want it to do. A job contains:
 
-    - A unique `id` that identifies it. This must be unique across your entire configuration file.
-    - A `submission_interval` that determines how often data is sent to the Telemetry API. The Agent coalesces updates and sends them at this interval in order to reduce your API usage.
-    - A `config` hash that contains the configuration for the plugin. The contents of this hash depend on which plugin you use
+	- A unique `id` that identifies it. This must be unique across your entire configuration file.
+	- A `submission_interval` that determines how often data is sent to the Telemetry API. The Agent coalesces updates and sends them at this interval in order to reduce your API usage.
+	- A `config` hash that contains the configuration for the plugin. The contents of this hash depend on which plugin you use
 
 ### Running the Agent
 
