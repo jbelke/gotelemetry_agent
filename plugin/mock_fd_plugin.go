@@ -36,18 +36,76 @@ func (plugin *MockFdPlugin) Init(job *job.Job) error {
 		return err
 	}
 
+	if err = plugin.PluginHelper.AddTaskWithClosureFromBoardForFlowWithTag(plugin.FeedImageFlow, time.Second*5, board, "image_13"); err != nil {
+		return err
+	}
+
+	if err = plugin.PluginHelper.AddTaskWithClosureFromBoardForFlowWithTag(plugin.FeedTimeSeriesFlow, time.Second*5, board, "timeseries_9"); err != nil {
+		return err
+	}
+
+	if err = plugin.PluginHelper.AddTaskWithClosureFromBoardForFlowWithTag(plugin.FeedTimeSeriesFlow, time.Second*5, board, "timeseries_10"); err != nil {
+		return err
+	}
+
+	if err = plugin.PluginHelper.AddTaskWithClosureFromBoardForFlowWithTag(plugin.FeedGaugeFlow, time.Second*5, board, "gauge_22"); err != nil {
+		return err
+	}
+
+	if err = plugin.PluginHelper.AddTaskWithClosureFromBoardForFlowWithTag(plugin.FeedMessageFlow, time.Second*5, board, "text_3"); err != nil {
+		return err
+	}
+
 	if err = plugin.PluginHelper.AddTaskWithClosureFromBoardForFlowWithTag(plugin.FeedValueFlow, time.Second*5, board, "value_50"); err != nil {
 		return err
 	}
+
 	if err = plugin.PluginHelper.AddTaskWithClosureFromBoardForFlowWithTag(plugin.FeedValueFlow, time.Second*5, board, "value_51"); err != nil {
 		return err
 	}
+
 	if err = plugin.PluginHelper.AddTaskWithClosureFromBoardForFlowWithTag(plugin.FeedValueFlow, time.Second*5, board, "value_52"); err != nil {
+		return err
+	}
+
+	if err = plugin.PluginHelper.AddTaskWithClosureFromBoardForFlowWithTag(plugin.FeedUpStatusFlow, time.Second*5, board, "upstatus_5"); err != nil {
+		return err
+	}
+
+	if err = plugin.PluginHelper.AddTaskWithClosureFromBoardForFlowWithTag(plugin.FeedGraphFlow, time.Second*5, board, "graph_13"); err != nil {
+		return err
+	}
+	if err = plugin.PluginHelper.AddTaskWithClosureFromBoardForFlowWithTag(plugin.FeedGraphFlow, time.Second*5, board, "graph_14"); err != nil {
+		return err
+	}
+	if err = plugin.PluginHelper.AddTaskWithClosureFromBoardForFlowWithTag(plugin.FeedGraphFlow, time.Second*5, board, "graph_15"); err != nil {
 		return err
 	}
 
 	return nil
 
+}
+
+func (plugin *MockFdPlugin) FeedImageFlow(job *job.Job, flow *gotelemetry.Flow) {
+
+	job.PostFlowUpdate(flow)
+	job.Logf("Updated flow %s", flow.Tag)
+
+}
+
+func (plugin *MockFdPlugin) FeedTimeSeriesFlow(job *job.Job, flow *gotelemetry.Flow) {
+	job.PostFlowUpdate(flow)
+	job.Logf("Updated flow %s", flow.Tag)
+}
+
+func (plugin *MockFdPlugin) FeedGaugeFlow(job *job.Job, flow *gotelemetry.Flow) {
+	job.PostFlowUpdate(flow)
+	job.Logf("Updated flow %s", flow.Tag)
+}
+
+func (plugin *MockFdPlugin) FeedMessageFlow(job *job.Job, flow *gotelemetry.Flow) {
+	job.PostFlowUpdate(flow)
+	job.Logf("Updated flow %s", flow.Tag)
 }
 
 // FIXME: Using Random from randomPlugin as a place holder. Expect to change this for s SQL Query to fetch real value from PRD
@@ -67,5 +125,15 @@ func (plugin *MockFdPlugin) FeedValueFlow(job *job.Job, flow *gotelemetry.Flow) 
 	job.PostFlowUpdate(flow)
 
 	// Log to the global log this way.
+	job.Logf("Updated flow %s", flow.Tag)
+}
+
+func (plugin *MockFdPlugin) FeedUpStatusFlow(job *job.Job, flow *gotelemetry.Flow) {
+	job.PostFlowUpdate(flow)
+	job.Logf("Updated flow %s", flow.Tag)
+}
+
+func (plugin *MockFdPlugin) FeedGraphFlow(job *job.Job, flow *gotelemetry.Flow) {
+	job.PostFlowUpdate(flow)
 	job.Logf("Updated flow %s", flow.Tag)
 }

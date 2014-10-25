@@ -2,21 +2,9 @@ accounts:
   - api_key: 2fcec2bd1c112dad755fbe1ad54db878
     submission_interval: 1
     jobs:
-      - id: merchant_1_job
+      - id: merchant_16_job
         plugin: plugin_fd
         config:
           board:
-            name: Merchant 1
-            prefix: m1    
-      - id: merchant_2_job
-        plugin: plugin_fd
-        config:
-          board:
-            name: Merchant 2
-            prefix: m2
-      - id: merchant_3_job
-        plugin: plugin_fd
-        config:
-          board:
-            name: Merchant 3
-            prefix: m3
+            name: Merchant 16
+            prefix: m16

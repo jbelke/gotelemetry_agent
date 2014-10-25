@@ -44,7 +44,7 @@ func (e *PluginHelper) addTask(t pluginHelperTask) {
 	e.tasks = append(e.tasks, t)
 }
 
-// Adds a task to the plugin. The task will be run automarically after the duration specified by
+// Adds a task to the plugin. The task will be run automatically after the duration specified by
 // the interval parameter. Note that interval is measured starting from the end of the last
 // execution; therefore, you do not need to worry about conditions like slow networking causing
 // successive iterations of a task to “execute over each other.”
