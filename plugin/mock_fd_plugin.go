@@ -202,6 +202,7 @@ func (plugin *MockFdPlugin) Feed30DayTransactionVolumeGraphFlow(job *job.Job, fl
 		return
 	}
 
+	data.Title = "30 Day Transaction Volume"
 	data.Series[0].Values = query30DayTransactionVolume()
 
 	job.PostFlowUpdate(flow)
@@ -217,6 +218,7 @@ func (plugin *MockFdPlugin) Feed90DayTransactionVolumeGraphFlow(job *job.Job, fl
 		return
 	}
 
+	data.Title = "90 Day Transaction Volume"
 	data.Series[0].Values = query90DayTransactionVolume()
 
 	job.PostFlowUpdate(flow)
