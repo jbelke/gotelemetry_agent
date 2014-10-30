@@ -1,9 +1,14 @@
 package plugin
 
 import (
+	"database/sql"
+	"fmt"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/telemetryapp/gotelemetry"
 	"github.com/telemetryapp/gotelemetry_agent/agent/job"
+	"log"
 	"math/rand"
+	"strconv"
 	"time"
 )
 
@@ -11,8 +16,14 @@ type MockFdPlugin struct {
 	*job.PluginHelper
 }
 
+var db, dbErr = sql.Open("mysql", "root@/FD_dump")
+
 func init() {
 	job.RegisterPlugin("plugin_fd", MockFdPluginFactory)
+
+	if dbErr != nil {
+		job.ReportError(gotelemetry.NewError(500, "Plugin 'plugin_fd' could not connect to the database"))
+	}
 }
 
 func MockFdPluginFactory() job.PluginInstance {
@@ -56,15 +67,15 @@ func (plugin *MockFdPlugin) Init(job *job.Job) error {
 		return err
 	}
 
-	if err = plugin.PluginHelper.AddTaskWithClosureFromBoardForFlowWithTag(plugin.FeedValueFlow, time.Second*5, board, "value_50"); err != nil {
+	if err = plugin.PluginHelper.AddTaskWithClosureFromBoardForFlowWithTag(plugin.FeedValueFlowForApprovedTransactions, time.Second*5, board, "value_50"); err != nil {
 		return err
 	}
 
-	if err = plugin.PluginHelper.AddTaskWithClosureFromBoardForFlowWithTag(plugin.FeedValueFlow, time.Second*5, board, "value_51"); err != nil {
+	if err = plugin.PluginHelper.AddTaskWithClosureFromBoardForFlowWithTag(plugin.FeedValueFlowForDeclinedTransactions, time.Second*5, board, "value_51"); err != nil {
 		return err
 	}
 
-	if err = plugin.PluginHelper.AddTaskWithClosureFromBoardForFlowWithTag(plugin.FeedValueFlow, time.Second*5, board, "value_52"); err != nil {
+	if err = plugin.PluginHelper.AddTaskWithClosureFromBoardForFlowWithTag(plugin.FeedValueFlowForErrorTransactions, time.Second*5, board, "value_52"); err != nil {
 		return err
 	}
 
@@ -72,10 +83,11 @@ func (plugin *MockFdPlugin) Init(job *job.Job) error {
 		return err
 	}
 
-	if err = plugin.PluginHelper.AddTaskWithClosureFromBoardForFlowWithTag(plugin.FeedGraphFlow, time.Second*5, board, "graph_13"); err != nil {
+	if err = plugin.PluginHelper.AddTaskWithClosureFromBoardForFlowWithTag(plugin.Feed30DayTransactionVolumeGraphFlow, time.Second*5, board, "graph_13"); err != nil {
 		return err
 	}
-	if err = plugin.PluginHelper.AddTaskWithClosureFromBoardForFlowWithTag(plugin.FeedGraphFlow, time.Second*5, board, "graph_14"); err != nil {
+
+	if err = plugin.PluginHelper.AddTaskWithClosureFromBoardForFlowWithTag(plugin.Feed90DayTransactionVolumeGraphFlow, time.Second*5, board, "graph_14"); err != nil {
 		return err
 	}
 	if err = plugin.PluginHelper.AddTaskWithClosureFromBoardForFlowWithTag(plugin.FeedGraphFlow, time.Second*5, board, "graph_15"); err != nil {
@@ -87,10 +99,8 @@ func (plugin *MockFdPlugin) Init(job *job.Job) error {
 }
 
 func (plugin *MockFdPlugin) FeedImageFlow(job *job.Job, flow *gotelemetry.Flow) {
-
 	job.PostFlowUpdate(flow)
 	job.Logf("Updated flow %s", flow.Tag)
-
 }
 
 func (plugin *MockFdPlugin) FeedTimeSeriesFlow(job *job.Job, flow *gotelemetry.Flow) {
@@ -104,13 +114,8 @@ func (plugin *MockFdPlugin) FeedGaugeFlow(job *job.Job, flow *gotelemetry.Flow) 
 }
 
 func (plugin *MockFdPlugin) FeedMessageFlow(job *job.Job, flow *gotelemetry.Flow) {
-	job.PostFlowUpdate(flow)
-	job.Logf("Updated flow %s", flow.Tag)
-}
 
-// FIXME: Using Random from randomPlugin as a place holder. Expect to change this for s SQL Query to fetch real value from PRD
-func (plugin *MockFdPlugin) FeedValueFlow(job *job.Job, flow *gotelemetry.Flow) {
-	data, err := flow.ValueData()
+	data, err := flow.TextData()
 
 	if !err {
 		// Report an error this way to ensure proper logging
@@ -118,17 +123,102 @@ func (plugin *MockFdPlugin) FeedValueFlow(job *job.Job, flow *gotelemetry.Flow) 
 		return
 	}
 
-	data.Value = rand.Float64() * 10000
+	data.Text = fmt.Sprintf("Daily transaction volume - Today is: %s", time.Now().Format("Jan 1, 2014"))
 
-	// Post a flow update this way. Updates are automatically accumulated and submitted to
-	// Telemetry according to the schedule illustrated in the config
 	job.PostFlowUpdate(flow)
+	job.Logf("Updated flow %s", flow.Tag)
+}
 
-	// Log to the global log this way.
+func (plugin *MockFdPlugin) FeedValueFlowForApprovedTransactions(job *job.Job, flow *gotelemetry.Flow) {
+	data, err := flow.ValueData()
+
+	if !err {
+		job.ReportError(gotelemetry.NewError(500, "Cannot extract value data from flow with tag `"+flow.Tag+"`"))
+		return
+	}
+
+	data.Value = data.Value.(float64) + float64(rand.Intn(100))
+	data.Label = "Approved"
+
+	job.PostFlowUpdate(flow)
+	job.Logf("Updated flow %s", flow.Tag)
+}
+
+func (plugin *MockFdPlugin) FeedValueFlowForDeclinedTransactions(job *job.Job, flow *gotelemetry.Flow) {
+	data, err := flow.ValueData()
+
+	if !err {
+		job.ReportError(gotelemetry.NewError(500, "Cannot extract value data from flow with tag `"+flow.Tag+"`"))
+		return
+	}
+
+	data.Value = data.Value.(float64) + float64(rand.Intn(30))
+	data.Label = "Declined"
+
+	job.PostFlowUpdate(flow)
+	job.Logf("Updated flow %s", flow.Tag)
+}
+
+func (plugin *MockFdPlugin) FeedValueFlowForErrorTransactions(job *job.Job, flow *gotelemetry.Flow) {
+	data, err := flow.ValueData()
+
+	if !err {
+		job.ReportError(gotelemetry.NewError(500, "Cannot extract value data from flow with tag `"+flow.Tag+"`"))
+		return
+	}
+
+	data.Value = data.Value.(float64) + float64(rand.Intn(5))
+	data.Label = "Error"
+
+	job.PostFlowUpdate(flow)
 	job.Logf("Updated flow %s", flow.Tag)
 }
 
 func (plugin *MockFdPlugin) FeedUpStatusFlow(job *job.Job, flow *gotelemetry.Flow) {
+
+	data, err := flow.UpstatusData()
+
+	if !err {
+		job.ReportError(gotelemetry.NewError(500, "Cannot extract value data from flow with tag `"+flow.Tag+"`"))
+		return
+	}
+
+	if rand.Intn(10)%10 == 0 {
+		data.Down = []string{"I'm down for some reason :("}
+	} else {
+		data.Down = []string{}
+	}
+
+	job.PostFlowUpdate(flow)
+	job.Logf("Updated flow %s", flow.Tag)
+}
+
+func (plugin *MockFdPlugin) Feed30DayTransactionVolumeGraphFlow(job *job.Job, flow *gotelemetry.Flow) {
+
+	data, err := flow.GraphData()
+
+	if !err {
+		job.ReportError(gotelemetry.NewError(500, "Cannot extract value data from flow with tag `"+flow.Tag+"`"))
+		return
+	}
+
+	data.Series[0].Values = query30DayTransactionVolume()
+
+	job.PostFlowUpdate(flow)
+	job.Logf("Updated flow %s", flow.Tag)
+}
+
+func (plugin *MockFdPlugin) Feed90DayTransactionVolumeGraphFlow(job *job.Job, flow *gotelemetry.Flow) {
+
+	data, err := flow.GraphData()
+
+	if !err {
+		job.ReportError(gotelemetry.NewError(500, "Cannot extract value data from flow with tag `"+flow.Tag+"`"))
+		return
+	}
+
+	data.Series[0].Values = query90DayTransactionVolume()
+
 	job.PostFlowUpdate(flow)
 	job.Logf("Updated flow %s", flow.Tag)
 }
@@ -136,4 +226,36 @@ func (plugin *MockFdPlugin) FeedUpStatusFlow(job *job.Job, flow *gotelemetry.Flo
 func (plugin *MockFdPlugin) FeedGraphFlow(job *job.Job, flow *gotelemetry.Flow) {
 	job.PostFlowUpdate(flow)
 	job.Logf("Updated flow %s", flow.Tag)
+}
+
+// Util methods to query
+func query30DayTransactionVolume() []float64 {
+	return queryNDayTransactionVolume(30)
+}
+
+func query90DayTransactionVolume() []float64 {
+	return queryNDayTransactionVolume(90)
+}
+
+func queryNDayTransactionVolume(interval int) []float64 {
+
+	transactionCountArray := make([]float64, interval)
+
+	query := "select date, sum(approved_count) from transaction_summaries where terminal_id in (select t.terminal_id from exactterminals t, exactmerchants m where  t.merchant_id = m.merchant_id and m.merchant_id = 1) and date between DATE('2012-07-20') - INTERVAL " + strconv.Itoa(interval-1) + " DAY and DATE('2012-07-20') group by date"
+	rows, err := db.Query(query)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer rows.Close()
+
+	for i := 0; rows.Next(); i++ {
+		var date string
+		var count float64
+		rows.Scan(&date, &count)
+		transactionCountArray[i] = count
+	}
+
+	return transactionCountArray
 }
