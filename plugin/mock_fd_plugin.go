@@ -112,6 +112,8 @@ func (plugin *MockFdPlugin) FeedTimeSeriesFlowAPITransactionsPerMinute(job *job.
 	}
 
 	data.Title = "API transactions per minute"
+	data.Interval = "minutes"
+	data.IntervalCount = 60
 
 	data.SeriesMetadata[0].Label = "Approved"
 	data.SeriesMetadata[0].Color = "8de2x26"
@@ -135,6 +137,8 @@ func (plugin *MockFdPlugin) FeedTimeSeriesFlowHCOTransactionsPerMinute(job *job.
 	}
 
 	data.Title = "HCO transactions per minute"
+	data.Interval = "minutes"
+	data.IntervalCount = 60
 
 	data.SeriesMetadata[0].Label = "Approved"
 	data.SeriesMetadata[0].Color = "8de226"

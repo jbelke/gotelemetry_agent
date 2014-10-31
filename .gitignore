@@ -25,3 +25,5 @@ _testmain.go
 
 local_config.yaml
 .DS_Store
+
+.idea
