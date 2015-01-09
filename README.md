@@ -48,7 +48,12 @@ The Agent should compile without problems on any platform that is supported by [
 
 Plugins are at the heart of the Agent's functionality: They provide the glue that bridges a data source to the Telemetry API.
 
-The Agent does not currently come with any built-in plugins—although it eventually will. In the meantime, writing your own plugin is a straightforward affair that, in most cases, only requires a few lines of code whose complexity depends on how hard extracting data from your source is.
+The Agent comes with two built-in plugins that should work for many common cases:
+
+- `com.telemetryapp.sql` supports the extraction of data from a SQL database to populate a flow
+- `com.telemetryapp.process` allows you to execute an external process (e.g.: a script you wrote in any language that can be executed from the command line) and use its output to populate a flow
+
+More details on the built-in plugins are available in the [GoDoc](http://godoc.org/github.com/telemetryapp/gotelemetry_agent/plugin) pages for the agent.
 
 ### Reasons for having plugins
 
