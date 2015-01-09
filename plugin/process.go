@@ -42,21 +42,23 @@ type ProcessPlugin struct {
 // Function Init initializes the plugin.
 //
 // The required configuration parameters are:
+//
 // - path                         The executable's path
+//
 // - flow_tag                     The tag of the flow to populate
+//
 // - variant                      The varient of the flow
-// - template                     A template that will be used to populate the
-//                                flow when it is created
+//
+// - template                     A template that will be used to populate the flow when it is created
 //
 // When the plugin is executed, it loads up the current state of the flow
 // and sends it to the external process as its only parameter.
 //
 // In output, the process has two options:
 //
-// - Output a JSON payload, which is used to replace the payload of the flow,
-//   which is then automatically submitted to the Telemetry API
-// - Output the text PATCH, followed by a newline, followed by a JSON-Patch
-//   payload that is applied to the flow.
+// - Output a JSON payload, which is used to replace the payload of the flow, which is then automatically submitted to the Telemetry API
+//
+// - Output the text PATCH, followed by a newline, followed by a JSON-Patch payload that is applied to the flow.
 //
 // For example:
 //
