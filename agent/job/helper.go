@@ -27,6 +27,7 @@ type pluginHelperTask func(job *Job, doneChannel chan bool)
 // whatever functionality you require and then exiting immediately.
 type PluginHelper struct {
 	tasks       []pluginHelperTask
+	closures    []PluginHelperClosure
 	doneChannel chan bool
 	waitGroup   *sync.WaitGroup
 }
@@ -40,8 +41,12 @@ func NewPluginHelper() *PluginHelper {
 	}
 }
 
-func (e *PluginHelper) addTask(t pluginHelperTask) {
-	e.tasks = append(e.tasks, t)
+func (e *PluginHelper) addTask(t pluginHelperTask, c PluginHelperClosure) {
+	if t != nil {
+		e.tasks = append(e.tasks, t)
+	}
+
+	e.closures = append(e.closures, c)
 }
 
 // Adds a task to the plugin. The task will be run automarically after the duration specified by
@@ -49,31 +54,35 @@ func (e *PluginHelper) addTask(t pluginHelperTask) {
 // execution; therefore, you do not need to worry about conditions like slow networking causing
 // successive iterations of a task to “execute over each other.”
 func (e *PluginHelper) AddTaskWithClosure(c PluginHelperClosure, interval time.Duration) {
-	t := func(job *Job, doneChannel chan bool) {
-		t := time.NewTimer(interval)
-		t.Stop()
+	var t pluginHelperTask = nil
 
-		for {
-			c(job)
+	if interval > 0 {
+		t = func(job *Job, doneChannel chan bool) {
+			t := time.NewTimer(interval)
+			t.Stop()
 
-			t.Reset(interval)
+			for {
+				c(job)
 
-			select {
-			case <-doneChannel:
-				t.Stop()
-				return
+				t.Reset(interval)
 
-			case <-t.C:
-				break
+				select {
+				case <-doneChannel:
+					t.Stop()
+					return
+
+				case <-t.C:
+					break
+				}
 			}
 		}
 	}
 
-	e.addTask(t)
+	e.addTask(t, c)
 }
 
 // Adds a task associated with a flow taken from a map of flows. You can obtain a map of flows by calling
-// the MapWidgetToFlows() method of gotelemetry.Board.
+// the MapWidgetsToFlows() method of gotelemetry.Board.
 func (e *PluginHelper) AddTaskWithClosureForFlowWithTag(c PluginHelperClosureWithFlow, interval time.Duration, flows map[string]*gotelemetry.Flow, tag string) error {
 	f, found := flows[tag]
 
@@ -123,9 +132,15 @@ func (e *PluginHelper) Run(job *Job) {
 	}
 }
 
+func (e *PluginHelper) RunOnce(job *Job) {
+	for _, c := range e.closures {
+		c(job)
+	}
+}
+
 // By default, the plugin helper refuses to reconfigure plugins.
 func (e *PluginHelper) Reconfigure(job *Job, config map[string]interface{}) error {
-	return gotelemetry.NewError(400, "This pluginc cannot reconfigure itself.")
+	return gotelemetry.NewError(400, "This plugin cannot reconfigure itself.")
 }
 
 // Terminate waits for all outstanding tasks to be completed and then returns.

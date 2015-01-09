@@ -18,10 +18,11 @@ type Job struct {
 	instance     PluginInstance           // The plugin instance
 	errorChannel *chan error              // A channel to which all errors are funneled
 	config       map[string]interface{}   // The configuration associated with the job
+	then         []*Job                   // Dependent jobs associated with this job
 }
 
 // newJob creates and starts a new Job
-func newJob(credentials gotelemetry.Credentials, stream *gotelemetry.BatchStream, id string, config map[string]interface{}, instance PluginInstance, errorChannel *chan error) (*Job, error) {
+func newJob(credentials gotelemetry.Credentials, stream *gotelemetry.BatchStream, id string, config map[string]interface{}, then []*Job, instance PluginInstance, errorChannel *chan error, wait bool) (*Job, error) {
 	result := &Job{
 		ID:           id,
 		credentials:  credentials,
@@ -29,15 +30,20 @@ func newJob(credentials gotelemetry.Credentials, stream *gotelemetry.BatchStream
 		instance:     instance,
 		errorChannel: errorChannel,
 		config:       config,
+		then:         then,
 	}
 
-	go result.start()
+	if wait {
+		result.start(true)
+	} else {
+		go result.start(false)
+	}
 
 	return result, nil
 }
 
 // start starts a job. It must be executed asychronously in its own goroutine
-func (j *Job) start() {
+func (j *Job) start(wait bool) {
 	err := j.instance.Init(j)
 
 	if err != nil {
@@ -48,7 +54,11 @@ func (j *Job) start() {
 		//TODO Signal failure to manager
 	}
 
-	j.instance.Run(j)
+	if wait {
+		go j.instance.Run(j)
+	} else {
+		j.instance.Run(j)
+	}
 }
 
 // Retrieve the configuration data associated with this job
@@ -83,6 +93,10 @@ func (j *Job) GetFlowLayout(id string) (*gotelemetry.Flow, error) {
 	return gotelemetry.GetFlowLayout(j.credentials, id)
 }
 
+func (j *Job) GetFlowTagLayout(tag string) (*gotelemetry.Flow, error) {
+	return gotelemetry.GetFlowLayoutWithTag(j.credentials, tag)
+}
+
 // ReadFlow populates a flow struct with the data that is currently on the server
 // Note that it is not necessary to populate f.Data, as the method will automatically
 // initialize a nil value with the appropriate data structure for the flow's variant.
@@ -97,6 +111,10 @@ func (j *Job) PostFlowUpdate(flow *gotelemetry.Flow) {
 	j.stream.C <- flow
 }
 
+func (j *Job) PostImmediateFlowUpdate(flow *gotelemetry.Flow) error {
+	return flow.PostUpdate()
+}
+
 // ReportError sends a formatted error to the agent's global error log. This should be
 // a plugin's preferred error reporting method when running.
 func (j *Job) ReportError(err error) {
@@ -104,6 +122,14 @@ func (j *Job) ReportError(err error) {
 
 	if j.errorChannel != nil {
 		*j.errorChannel <- actualError
+	}
+}
+
+// Function PerformSubtasks runs any tasks that have been associated with the
+// `then` entry to the current task.
+func (j *Job) PerformSubtasks() {
+	for _, job := range j.then {
+		job.instance.RunOnce(job)
 	}
 }
 

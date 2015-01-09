@@ -12,6 +12,7 @@ import (
 type PluginInstance interface {
 	Init(job *Job) error                                       // Initializes the instance
 	Run(job *Job)                                              // Runs the instance synchronously until Terminate() is called
+	RunOnce(job *Job)                                          // Runs the instance synchronously exactly one time and returns immediately
 	Reconfigure(job *Job, config map[string]interface{}) error // Dynamically reconfigures the instance, or returns an error if it can't
 	Terminate(job *Job)                                        // Terminates the instance, returning only when its execution is complete
 }

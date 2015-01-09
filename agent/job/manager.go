@@ -12,6 +12,30 @@ type JobManager struct {
 	jobs           map[string]*Job
 }
 
+func createJob(credentials gotelemetry.Credentials, accountStream *gotelemetry.BatchStream, errorChannel *chan error, jobDescription config.Job, wait bool) (*Job, error) {
+	pluginFactory, err := GetPlugin(jobDescription.Plugin)
+
+	if err != nil {
+		return nil, err
+	}
+
+	pluginInstance := pluginFactory()
+
+	then := []*Job{}
+
+	for _, jobConfig := range jobDescription.Then {
+		job, err := createJob(credentials, accountStream, errorChannel, jobConfig, true)
+
+		if err != nil {
+			return nil, err
+		}
+
+		then = append(then, job)
+	}
+
+	return newJob(credentials, accountStream, jobDescription.ID, jobDescription.Config, then, pluginInstance, errorChannel, wait)
+}
+
 func NewJobManager(config config.ConfigInterface, errorChannel *chan error) (*JobManager, error) {
 	result := &JobManager{
 		credentials:    map[string]gotelemetry.Credentials{},
@@ -57,15 +81,7 @@ func NewJobManager(config config.ConfigInterface, errorChannel *chan error) (*Jo
 				return nil, gotelemetry.NewError(500, "Duplicate job `"+jobId+"`")
 			}
 
-			pluginFactory, err := GetPlugin(jobDescription.Plugin)
-
-			if err != nil {
-				return nil, err
-			}
-
-			pluginInstance := pluginFactory()
-
-			job, err := newJob(credentials, accountStream, jobDescription.ID, jobDescription.Config, pluginInstance, errorChannel)
+			job, err := createJob(credentials, accountStream, errorChannel, jobDescription, false)
 
 			if err != nil {
 				return nil, err
