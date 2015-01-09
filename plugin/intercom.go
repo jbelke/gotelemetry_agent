@@ -31,9 +31,13 @@ func IntercomPluginFactory() job.PluginInstance {
 // The database contains these tables:
 //
 // - intercom_organizations      - a list of organizations registered in your Intercom account
+//
 // - intercom_users              - a list of users registered in your Intercom account
+//
 // - intercom_segments           - a list of segments registered in your Intercom account
-// - intercom_tags               - a list of tags registered in your Intercom account
+//
+// - intercom_tags               - a list of tags registered in your Intercom account]
+//
 // - intercom_social_profiles    - a list of social profiles for each user
 //
 // Join tables are also provided that link users to companies, tags, segments, and social profiles
@@ -52,9 +56,10 @@ type IntercomPlugin struct {
 // Required configuration parameters are:
 //
 // - application_id - Your Intercom Application ID
+//
 // - api_key        - Your (Read only) Intercom API Key
-// - db_path        - A location for the output SQLite database.
-//                    Note that the agent must have create and write access to this location
+//
+// - db_path        - A location for the output SQLite database. Note that the agent must have create and write access to this location
 //
 // Your Intercom Application ID and API Key can be retrieved from Intercom by choosing Company Settings / API Keys
 func (p *IntercomPlugin) Init(job *job.Job) error {
