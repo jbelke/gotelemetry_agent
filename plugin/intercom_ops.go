@@ -6,13 +6,13 @@ import (
 	"github.com/telemetryapp/gotelemetry_agent/agent/job"
 )
 
-type intercomFetchIterator func(target *IntercomResponse) error
+type intercomFetchIterator func(target *intercomResponse) error
 
 func (p *IntercomPlugin) fetchAllPages(endpoint string, iterator intercomFetchIterator) error {
 	url := endpoint
 
 	for {
-		target := &IntercomResponse{}
+		target := &intercomResponse{}
 
 		if err := p.performRequest(url, target); err != nil {
 			return err
@@ -42,12 +42,12 @@ func (p *IntercomPlugin) fetchUsers(job *job.Job) {
 
 	defer db.Close()
 
-	iterator := func(r *IntercomResponse) error {
+	iterator := func(r *intercomResponse) error {
 		for _, u := range r.Users {
 			u.Segments = u.Segment.Segments
 
 			for index, segment := range u.Segments {
-				s := IntercomSegment{IntercomId: segment.IntercomId}
+				s := intercomSegment{IntercomId: segment.IntercomId}
 				db.FirstOrCreate(&s, s)
 
 				u.Segments[index].Id = s.Id
@@ -58,7 +58,7 @@ func (p *IntercomPlugin) fetchUsers(job *job.Job) {
 			u.Companies = u.Company.Companies
 
 			for index, company := range u.Companies {
-				c := IntercomCompany{IntercomId: company.IntercomId}
+				c := intercomCompany{IntercomId: company.IntercomId}
 
 				db.FirstOrCreate(&c, c)
 
@@ -70,7 +70,7 @@ func (p *IntercomPlugin) fetchUsers(job *job.Job) {
 			u.Tags = u.Tag.Tags
 
 			for index, tag := range u.Tags {
-				t := IntercomTag{IntercomId: tag.IntercomId}
+				t := intercomTag{IntercomId: tag.IntercomId}
 
 				db.FirstOrCreate(&t, t)
 
@@ -80,7 +80,7 @@ func (p *IntercomPlugin) fetchUsers(job *job.Job) {
 			}
 
 			for index, profile := range u.SocialProfiles {
-				p := IntercomSocialProfile{IntercomId: profile.IntercomId}
+				p := intercomSocialProfile{IntercomId: profile.IntercomId}
 
 				db.FirstOrCreate(&p, p)
 
@@ -92,7 +92,7 @@ func (p *IntercomPlugin) fetchUsers(job *job.Job) {
 			db.FirstOrCreate(&u.Location, u.Location)
 			db.Save(&u.Location)
 
-			db.FirstOrCreate(&u, IntercomUser{IntercomId: u.IntercomId})
+			db.FirstOrCreate(&u, intercomUser{IntercomId: u.IntercomId})
 			db.Save(&u)
 
 			if db.Error != nil {
@@ -120,9 +120,9 @@ func (p *IntercomPlugin) fetchTags(job *job.Job) {
 
 	defer db.Close()
 
-	iterator := func(r *IntercomResponse) error {
+	iterator := func(r *intercomResponse) error {
 		for _, tag := range r.Tags {
-			t := IntercomTag{IntercomId: tag.IntercomId}
+			t := intercomTag{IntercomId: tag.IntercomId}
 
 			db.FirstOrCreate(&t, t)
 
@@ -155,9 +155,9 @@ func (p *IntercomPlugin) fetchSegments(job *job.Job) {
 
 	defer db.Close()
 
-	iterator := func(r *IntercomResponse) error {
+	iterator := func(r *intercomResponse) error {
 		for _, segment := range r.Segments {
-			s := IntercomSegment{IntercomId: segment.IntercomId}
+			s := intercomSegment{IntercomId: segment.IntercomId}
 
 			db.FirstOrCreate(&s, s)
 
@@ -190,9 +190,9 @@ func (p *IntercomPlugin) fetchCompanies(job *job.Job) {
 
 	defer db.Close()
 
-	iterator := func(r *IntercomResponse) error {
+	iterator := func(r *intercomResponse) error {
 		for _, company := range r.Companies {
-			c := IntercomCompany{IntercomId: company.IntercomId}
+			c := intercomCompany{IntercomId: company.IntercomId}
 
 			db.FirstOrCreate(&c, c)
 

@@ -1,10 +1,10 @@
 package plugin
 
-type IntercomResponsePage struct {
+type intercomResponsePage struct {
 	Next *string `json:"next"`
 }
 
-type IntercomCompany struct {
+type intercomCompany struct {
 	Id           int     `json:"-"`
 	IntercomId   string  `json:"id"`
 	InternalId   string  `json:"company_id"`
@@ -13,11 +13,11 @@ type IntercomCompany struct {
 	MonthlySpend float64 `json:"monthly_spend"`
 }
 
-type IntercomCompanyContainer struct {
-	Companies []IntercomCompany `json:"companies" gorm:"many2many:intercom_company_companies"`
+type intercomCompanyContainer struct {
+	Companies []intercomCompany `json:"companies" gorm:"many2many:intercom_company_companies"`
 }
 
-type IntercomLocation struct {
+type intercomLocation struct {
 	Id       int    `json:"-"`
 	City     string `json:"city_name"`
 	Country  string `json:"country_code"`
@@ -25,28 +25,28 @@ type IntercomLocation struct {
 	Timezone string `json:"timezone"`
 }
 
-type IntercomSegment struct {
+type intercomSegment struct {
 	Id         int    `json:"-"`
 	IntercomId string `json:"id"`
 	Name       string `json:"name"`
 }
 
-type IntercomSegmentContainer struct {
-	Segments []IntercomSegment `json:"segments"`
+type intercomSegmentContainer struct {
+	Segments []intercomSegment `json:"segments"`
 }
 
-type IntercomTag struct {
+type intercomTag struct {
 	Id         int    `json:"-"`
 	IntercomId string `json:"id"`
 	Name       string `json:"name"`
 }
 
-type IntercomTagContainer struct {
+type intercomTagContainer struct {
 	Id   int           `json:"-"`
-	Tags []IntercomTag `json:"tags"`
+	Tags []intercomTag `json:"tags"`
 }
 
-type IntercomSocialProfile struct {
+type intercomSocialProfile struct {
 	Id         int    `json:"-"`
 	IntercomId string `json:"id"`
 	URL        string `json:"url"`
@@ -54,33 +54,33 @@ type IntercomSocialProfile struct {
 	Name       string `json:"name"`
 }
 
-type IntercomUser struct {
+type intercomUser struct {
 	Id                     int                      `json:"-"`
 	IntercomId             string                   `json:"id"`
 	InternalId             string                   `json:"user_id"`
-	Company                IntercomCompanyContainer `json:"companies" sql:"-" gorm:"-"`
-	Companies              []IntercomCompany        `json:"-" gorm:"many2many:intercom_user_companies"`
+	Company                intercomCompanyContainer `json:"companies" sql:"-" gorm:"-"`
+	Companies              []intercomCompany        `json:"-" gorm:"many2many:intercom_user_companies"`
 	CreatedAt              int                      `json:"created_at"`
 	LastRequestAt          int                      `json:"last_request_at"`
 	Email                  string                   `json:"email"`
-	Location               IntercomLocation         `json:"location_data"`
+	Location               intercomLocation         `json:"location_data"`
 	LocationId             int                      ``
 	Name                   string                   `json:"name"`
-	Segment                IntercomSegmentContainer `json:"segments" sql:"-" gorm:"-"`
-	Segments               []IntercomSegment        `json:"-" gorm:"many2many:intercom_user_segments"`
-	SocialProfiles         []IntercomSocialProfile  `json:"social_profile" gorm:"many2many:intercom_user_social_profiles"`
+	Segment                intercomSegmentContainer `json:"segments" sql:"-" gorm:"-"`
+	Segments               []intercomSegment        `json:"-" gorm:"many2many:intercom_user_segments"`
+	SocialProfiles         []intercomSocialProfile  `json:"social_profile" gorm:"many2many:intercom_user_social_profiles"`
 	SessionCount           int                      `json:"session_count"`
-	Tag                    IntercomTagContainer     `json:"tags" sql:"-" gorm:"-"`
-	Tags                   []IntercomTag            `json:"-" gorm:"many2many:intercom_user_tag"`
+	Tag                    intercomTagContainer     `json:"tags" sql:"-" gorm:"-"`
+	Tags                   []intercomTag            `json:"-" gorm:"many2many:intercom_user_tag"`
 	UnsubscribedFromEmails bool                     `json:"unsubscribed_from_emails"`
 }
 
-type IntercomResponse struct {
-	Pages      IntercomResponsePage `json:"pages"`
+type intercomResponse struct {
+	Pages      intercomResponsePage `json:"pages"`
 	TotalCount int                  `json:"total_count"`
 	Type       string               `json:"type"`
-	Users      []IntercomUser       `json:"users"`
-	Tags       []IntercomTag        `json:"tags"`
-	Segments   []IntercomSegment    `json:"segments"`
-	Companies  []IntercomCompany    `json:"companies"`
+	Users      []intercomUser       `json:"users"`
+	Tags       []intercomTag        `json:"tags"`
+	Segments   []intercomSegment    `json:"segments"`
+	Companies  []intercomCompany    `json:"companies"`
 }

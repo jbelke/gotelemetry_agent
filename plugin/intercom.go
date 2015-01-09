@@ -100,10 +100,10 @@ func (p *IntercomPlugin) Init(job *job.Job) error {
 func (p *IntercomPlugin) performAllTasks(job *job.Job) {
 	job.Log("Starting Intercom plugin...")
 
-	// p.fetchTags(job)
-	// p.fetchSegments(job)
-	// p.fetchCompanies(job)
-	// p.fetchUsers(job)
+	p.fetchTags(job)
+	p.fetchSegments(job)
+	p.fetchCompanies(job)
+	p.fetchUsers(job)
 
 	job.Log("Intercom plugin done.")
 

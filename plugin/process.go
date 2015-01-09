@@ -154,11 +154,9 @@ func (p *ProcessPlugin) performAllTasks(j *job.Job) {
 
 		j.Logf("Posting flow %s", p.flow.Id)
 
-		j.Logf("%#v", p.flow.Data)
-
 		j.PostFlowUpdate(p.flow)
 
-		j.Log("SQL plugin complete.")
+		j.Log("Process plugin complete.")
 	}
 
 }

@@ -17,29 +17,29 @@ func (p *IntercomPlugin) setupDatabase(job *job.Job) error {
 
 	// db.LogMode(true)
 
-	if !db.HasTable(IntercomCompany{}) {
-		db.CreateTable(IntercomCompany{})
+	if !db.HasTable(intercomCompany{}) {
+		db.CreateTable(intercomCompany{})
 	}
 
-	if !db.HasTable(IntercomSegment{}) {
-		db.CreateTable(IntercomSegment{})
+	if !db.HasTable(intercomSegment{}) {
+		db.CreateTable(intercomSegment{})
 	}
 
-	if !db.HasTable(IntercomLocation{}) {
-		db.CreateTable(IntercomLocation{})
+	if !db.HasTable(intercomLocation{}) {
+		db.CreateTable(intercomLocation{})
 	}
 
-	if !db.HasTable(IntercomSocialProfile{}) {
-		db.CreateTable(IntercomSocialProfile{})
+	if !db.HasTable(intercomSocialProfile{}) {
+		db.CreateTable(intercomSocialProfile{})
 	}
 
-	if !db.HasTable(IntercomTag{}) {
-		db.CreateTable(IntercomTag{})
+	if !db.HasTable(intercomTag{}) {
+		db.CreateTable(intercomTag{})
 
 	}
 
-	if !db.HasTable(IntercomUser{}) {
-		db.CreateTable(IntercomUser{})
+	if !db.HasTable(intercomUser{}) {
+		db.CreateTable(intercomUser{})
 	}
 
 	return nil
