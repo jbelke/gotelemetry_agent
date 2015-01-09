@@ -73,10 +73,6 @@ func (p *SQLPlugin) Init(job *job.Job) error {
 		if p.flow.Variant != p.variant {
 			return errors.New("Flow " + p.flow.Id + " is of type " + p.flow.Variant + " instead of the expected " + p.variant)
 		}
-
-		if err != nil {
-			return err
-		}
 	} else {
 		p.flow, err = job.CreateFlow(p.flowTag, p.variant, "gotelemetry_agent", "", "")
 
@@ -131,7 +127,10 @@ func (p *SQLPlugin) performAllTasks(j *job.Job) {
 
 	defer rs.Close()
 
-	j.ReadFlow(p.flow)
+	if err := j.ReadFlow(p.flow); err != nil {
+		j.ReportError(err)
+		return
+	}
 
 	doc, err := json.Marshal(p.flow.Data)
 
@@ -185,8 +184,6 @@ func (p *SQLPlugin) performAllTasks(j *job.Job) {
 				return
 			}
 
-			j.Logf("%s", v)
-
 			patchSource = strings.Replace(patchSource, fmt.Sprintf(`"$$%d"`, index), string(v), -1)
 
 			if err != nil {
@@ -194,8 +191,6 @@ func (p *SQLPlugin) performAllTasks(j *job.Job) {
 				return
 			}
 		}
-
-		j.Logf("P: %s", patchSource)
 
 		patch, err := jsonpatch.DecodePatch([]byte(patchSource))
 

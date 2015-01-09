@@ -97,6 +97,40 @@ func (j *Job) GetFlowTagLayout(tag string) (*gotelemetry.Flow, error) {
 	return gotelemetry.GetFlowLayoutWithTag(j.credentials, tag)
 }
 
+func (j *Job) GetOrCreateFlow(tag, variant, agent string, template map[string]interface{}) (*gotelemetry.Flow, error) {
+	f, err := j.GetFlowTagLayout(tag)
+
+	if err == nil {
+		if f.Variant != variant {
+			return nil, errors.New("Flow " + f.Id + " is of type " + f.Variant + " instead of the expected " + variant)
+		}
+
+		return f, nil
+	}
+
+	f, err = j.CreateFlow(tag, variant, agent, "", "")
+
+	if err != nil {
+		return nil, err
+	}
+
+	err = j.ReadFlow(f)
+
+	if err != nil {
+		return nil, err
+	}
+
+	err = f.Populate(variant, template)
+
+	if err != nil {
+		return nil, err
+	}
+
+	err = j.PostImmediateFlowUpdate(f)
+
+	return f, err
+}
+
 // ReadFlow populates a flow struct with the data that is currently on the server
 // Note that it is not necessary to populate f.Data, as the method will automatically
 // initialize a nil value with the appropriate data structure for the flow's variant.
