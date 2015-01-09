@@ -1,3 +1,10 @@
+// Package plugin contains all the plugins known to the Telemetry agent.
+//
+// Currently, the following are implemented:
+//
+// * com.telemetryapp.intercom
+// * com.telemetryapp.sql
+// * com.telemetryapp.process
 package plugin
 
 import (
