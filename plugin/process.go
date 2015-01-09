@@ -47,7 +47,7 @@ type ProcessPlugin struct {
 //
 // - flow_tag                     The tag of the flow to populate
 //
-// - variant                      The varient of the flow
+// - variant                      The variant of the flow
 //
 // - template                     A template that will be used to populate the flow when it is created
 //
