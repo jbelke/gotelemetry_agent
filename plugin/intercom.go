@@ -14,14 +14,15 @@ func init() {
 	job.RegisterPlugin("com.telemetryapp.intercom", IntercomPluginFactory)
 }
 
-// Func IntercomPluginFactory generates a blank plugin instance
+// Func IntercomPluginFactory generates a blank plugin instance for the
+// `com.telemetryapp.intercom` plugin
 func IntercomPluginFactory() job.PluginInstance {
 	return &IntercomPlugin{
 		PluginHelper: job.NewPluginHelper(),
 	}
 }
 
-// Struct IntercomPlugin is our allows pulling and collating information from an Intercom.io
+// Struct IntercomPlugin allows pulling and collating information from an Intercom.io
 // account (https://intercom.io).
 //
 // The plugin does not populate Telemetry flows directly; instead, it stores everything
@@ -29,11 +30,13 @@ func IntercomPluginFactory() job.PluginInstance {
 //
 // The database contains these tables:
 //
-// - organizations      - a list of organizations registered in your Intercom account
-// - users              - a list of users registered in your Intercom account
-// - social             - a list of social profiles for each user
-// - conversations      - a list of all conversations
-// - conversation_parts - a list of parts for each conversations
+// - intercom_organizations      - a list of organizations registered in your Intercom account
+// - intercom_users              - a list of users registered in your Intercom account
+// - intercom_segments           - a list of segments registered in your Intercom account
+// - intercom_tags               - a list of tags registered in your Intercom account
+// - intercom_social_profiles    - a list of social profiles for each user
+//
+// Join tables are also provided that link users to companies, tags, segments, and social profiles
 //
 // For information on configuration parameters, check IntercomPlugin.Init()
 type IntercomPlugin struct {

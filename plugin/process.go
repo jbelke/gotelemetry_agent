@@ -14,13 +14,12 @@ import (
 )
 
 // init() registers this plugin with the Plugin Manager.
-// The plugin provides a ProcessPluginFactory that the manager calls whenever it needs
-// to create a new job
 func init() {
 	job.RegisterPlugin("com.telemetryapp.process", ProcessPluginFactory)
 }
 
-// Func ProcessPluginFactory generates a blank plugin instance
+// Func ProcessPluginFactory generates a blank instance of the
+// `com.telemetryapp.process` plugin
 func ProcessPluginFactory() job.PluginInstance {
 	return &ProcessPlugin{
 		PluginHelper: job.NewPluginHelper(),
@@ -40,10 +39,48 @@ type ProcessPlugin struct {
 	flow     *gotelemetry.Flow
 }
 
-// Init initializes the plugin.
+// Function Init initializes the plugin.
+//
+// The required configuration parameters are:
+// - path                         The executable's path
+// - flow_tag                     The tag of the flow to populate
+// - variant                      The varient of the flow
+// - template                     A template that will be used to populate the
+//                                flow when it is created
+//
+// When the plugin is executed, it loads up the current state of the flow
+// and sends it to the external process as its only parameter.
+//
+// In output, the process has two options:
+//
+// - Output a JSON payload, which is used to replace the payload of the flow,
+//   which is then automatically submitted to the Telemetry API
+// - Output the text PATCH, followed by a newline, followed by a JSON-Patch
+//   payload that is applied to the flow.
+//
+// For example:
+//
+//  jobs:
+//    - id: Telemetry External
+//      plugin: com.telemetryapp.process
+//      config:
+//        refresh: 86400
+//        path: ./test.php
+//        flow_tag: php_test
+//        variant: value
+//        template:
+//          color: white
+//          label: PHP Test
+//          value: 100
+//
+// test.php:
+//
+//   #!/usr/bin/php
+//   <?php
+//   echo "PATCH\n";
+//   echo '[{"op":"replace", "path":"/value", "value":123}]';
 func (p *ProcessPlugin) Init(job *job.Job) error {
 	c := job.Config()
-
 	p.tag = c["flow_tag"].(string)
 	p.path = c["path"].(string)
 	p.variant = c["variant"].(string)

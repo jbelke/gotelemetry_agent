@@ -15,13 +15,12 @@ import (
 )
 
 // Function init() registers this plugin with the Plugin Manager.
-// The plugin provides a SQLPluginFactory that the manager calls whenever it needs
-// to create a new job
 func init() {
 	job.RegisterPlugin("com.telemetryapp.sql", SQLPluginFactory)
 }
 
-// Func IntercomPluginFactory generates a blank plugin instance
+// Func IntercomPluginFactory generates a blank plugin instance of the
+// com.telemetryapp.sql plugin
 func SQLPluginFactory() job.PluginInstance {
 	return &SQLPlugin{
 		PluginHelper: job.NewPluginHelper(),
@@ -29,7 +28,7 @@ func SQLPluginFactory() job.PluginInstance {
 }
 
 // Struct SQLPlugin is allows populating flows based on the content of a SQL
-// database
+// database. For configuration parameters, see Init()
 //
 type SQLPlugin struct {
 	*job.PluginHelper
@@ -45,7 +44,39 @@ type SQLPlugin struct {
 
 // Function Init initializes the plugin.
 //
-// Required configuration parameters are:
+// The required configuration parameters are:
+// - driver                       The SQL driver to use
+// - datasource                   The datasource on which to operate
+// - query                        The query to be executed
+// - flow_tag                     The tag of the flow to populate
+// - variant                      The varient of the flow
+// - template                     A template that will be used to populate the
+//                                flow when it is created
+// - patch                        A JSON Patch payload that describes how
+//                                the data extracted from the database must be
+//                                applied to the flow
+//
+// The patch is executed once for each row; you can use $$row as a placeholder for
+// the number of the current row, and $$n as a placeholder for the value of column
+// n in the current row.
+//
+// For example:
+//
+//   - id: Users with five or more sessions
+//     plugin: com.telemetryapp.sql
+//     config:
+//       driver: sqlite3
+//       datasource: /tmp/telemetry_intercom.sqlite
+//       query: "select count(*) / cast(t.total as real) * 100 from intercom_users cross join (select count(*) as total from intercom_users) as t where session_count >= 5;"
+//       patch:
+//         - { "op": "replace" , "path": "/value", "value": $$0 }
+//       flow_tag: users_5_sessions
+//       variant: value
+//       template:
+//         color: white
+//         label: Frequent Users
+//         value_type: percent
+//         value: 100
 func (p *SQLPlugin) Init(job *job.Job) error {
 	var err error
 
