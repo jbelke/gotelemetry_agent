@@ -69,7 +69,11 @@ func (p *IntercomPlugin) Init(job *job.Job) error {
 	p.APIKey = config["api_key"].(string)
 	p.DBPath = config["db_path"].(string)
 
-	refresh := time.Duration(config["refresh"].(int)) * time.Second
+	var refresh time.Duration = 0
+
+	if refreshRate, ok := config["refresh"].(int); ok {
+		refresh = time.Duration(refreshRate) * time.Second
+	}
 
 	// Make a sample request to determine rate limiting
 

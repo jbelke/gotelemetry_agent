@@ -16,8 +16,9 @@ func main() {
 	}
 
 	errorChannel := make(chan error, 0)
+	completionChannel := make(chan bool, 0)
 
-	_, err = job.NewJobManager(config, &errorChannel)
+	_, err = job.NewJobManager(config, &errorChannel, &completionChannel)
 
 	if err != nil {
 		panic(err)
@@ -25,8 +26,15 @@ func main() {
 
 	for {
 		select {
+		case <-completionChannel:
+			goto Done
+
 		case err := <-errorChannel:
 			log.Printf("Error: %s", err.Error())
 		}
 	}
+
+Done:
+
+	log.Println("No more jobs to run; exiting.")
 }

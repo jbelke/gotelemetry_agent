@@ -115,6 +115,15 @@ func (e *PluginHelper) AddTaskWithClosureFromBoardForFlowWithTag(c PluginHelperC
 // Run method satisfies the requirements of the PluginInstance interface,
 // executing all the tasks asynchronously.
 func (e *PluginHelper) Run(job *Job) {
+	if len(e.tasks) == 0 {
+		// Since there are no scheduled tasks, we just run everything once and
+		// exit. This makes it possible to schedule a run of the agent through
+		// some external mechanism like cron.
+
+		e.RunOnce(job)
+		return
+	}
+
 	defer e.waitGroup.Done()
 
 	for _, t := range e.tasks {

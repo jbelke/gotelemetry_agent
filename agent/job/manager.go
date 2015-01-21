@@ -7,12 +7,14 @@ import (
 )
 
 type JobManager struct {
-	credentials    map[string]gotelemetry.Credentials
-	accountStreams map[string]*gotelemetry.BatchStream
-	jobs           map[string]*Job
+	credentials          map[string]gotelemetry.Credentials
+	accountStreams       map[string]*gotelemetry.BatchStream
+	jobs                 map[string]*Job
+	completionChannel    *chan bool
+	jobCompletionChannel chan string
 }
 
-func createJob(credentials gotelemetry.Credentials, accountStream *gotelemetry.BatchStream, errorChannel *chan error, jobDescription config.Job, wait bool) (*Job, error) {
+func createJob(credentials gotelemetry.Credentials, accountStream *gotelemetry.BatchStream, errorChannel *chan error, jobDescription config.Job, jobCompletionChannel chan string, wait bool) (*Job, error) {
 	pluginFactory, err := GetPlugin(jobDescription.Plugin)
 
 	if err != nil {
@@ -24,7 +26,7 @@ func createJob(credentials gotelemetry.Credentials, accountStream *gotelemetry.B
 	then := []*Job{}
 
 	for _, jobConfig := range jobDescription.Then {
-		job, err := createJob(credentials, accountStream, errorChannel, jobConfig, true)
+		job, err := createJob(credentials, accountStream, errorChannel, jobConfig, jobCompletionChannel, true)
 
 		if err != nil {
 			return nil, err
@@ -33,14 +35,16 @@ func createJob(credentials gotelemetry.Credentials, accountStream *gotelemetry.B
 		then = append(then, job)
 	}
 
-	return newJob(credentials, accountStream, jobDescription.ID, jobDescription.Config, then, pluginInstance, errorChannel, wait)
+	return newJob(credentials, accountStream, jobDescription.ID, jobDescription.Config, then, pluginInstance, errorChannel, jobCompletionChannel, wait)
 }
 
-func NewJobManager(config config.ConfigInterface, errorChannel *chan error) (*JobManager, error) {
+func NewJobManager(config config.ConfigInterface, errorChannel *chan error, completionChannel *chan bool) (*JobManager, error) {
 	result := &JobManager{
-		credentials:    map[string]gotelemetry.Credentials{},
-		accountStreams: map[string]*gotelemetry.BatchStream{},
-		jobs:           map[string]*Job{},
+		credentials:          map[string]gotelemetry.Credentials{},
+		accountStreams:       map[string]*gotelemetry.BatchStream{},
+		jobs:                 map[string]*Job{},
+		completionChannel:    completionChannel,
+		jobCompletionChannel: make(chan string),
 	}
 
 	for _, account := range config.Accounts() {
@@ -81,7 +85,7 @@ func NewJobManager(config config.ConfigInterface, errorChannel *chan error) (*Jo
 				return nil, gotelemetry.NewError(500, "Duplicate job `"+jobId+"`")
 			}
 
-			job, err := createJob(credentials, accountStream, errorChannel, jobDescription, false)
+			job, err := createJob(credentials, accountStream, errorChannel, jobDescription, result.jobCompletionChannel, false)
 
 			if err != nil {
 				return nil, err
@@ -91,5 +95,21 @@ func NewJobManager(config config.ConfigInterface, errorChannel *chan error) (*Jo
 		}
 	}
 
+	go result.monitorDoneChannel()
+
 	return result, nil
+}
+
+func (m *JobManager) monitorDoneChannel() {
+	for {
+		select {
+		case id := <-m.jobCompletionChannel:
+			delete(m.jobs, id)
+
+			if len(m.jobs) == 0 {
+				*m.completionChannel <- true
+				return
+			}
+		}
+	}
 }

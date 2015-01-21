@@ -12,25 +12,27 @@ import (
 )
 
 type Job struct {
-	ID           string                   // The ID of the job
-	credentials  gotelemetry.Credentials  // The credentials used by the job. These are not exposed to the plugin
-	stream       *gotelemetry.BatchStream // The batch stream used by the job. This is likewide not exposed to the plugin
-	instance     PluginInstance           // The plugin instance
-	errorChannel *chan error              // A channel to which all errors are funneled
-	config       map[string]interface{}   // The configuration associated with the job
-	then         []*Job                   // Dependent jobs associated with this job
+	ID                string                   // The ID of the job
+	credentials       gotelemetry.Credentials  // The credentials used by the job. These are not exposed to the plugin
+	stream            *gotelemetry.BatchStream // The batch stream used by the job. This is likewide not exposed to the plugin
+	instance          PluginInstance           // The plugin instance
+	errorChannel      *chan error              // A channel to which all errors are funneled
+	config            map[string]interface{}   // The configuration associated with the job
+	then              []*Job                   // Dependent jobs associated with this job
+	completionChannel chan string              // To be pinged when the job has finished running, so that the manager knows when to quit
 }
 
 // newJob creates and starts a new Job
-func newJob(credentials gotelemetry.Credentials, stream *gotelemetry.BatchStream, id string, config map[string]interface{}, then []*Job, instance PluginInstance, errorChannel *chan error, wait bool) (*Job, error) {
+func newJob(credentials gotelemetry.Credentials, stream *gotelemetry.BatchStream, id string, config map[string]interface{}, then []*Job, instance PluginInstance, errorChannel *chan error, jobCompletionChannel chan string, wait bool) (*Job, error) {
 	result := &Job{
-		ID:           id,
-		credentials:  credentials,
-		stream:       stream,
-		instance:     instance,
-		errorChannel: errorChannel,
-		config:       config,
-		then:         then,
+		ID:                id,
+		credentials:       credentials,
+		stream:            stream,
+		instance:          instance,
+		errorChannel:      errorChannel,
+		config:            config,
+		then:              then,
+		completionChannel: jobCompletionChannel,
 	}
 
 	if wait {
@@ -58,6 +60,7 @@ func (j *Job) start(wait bool) {
 		go j.instance.Run(j)
 	} else {
 		j.instance.Run(j)
+		j.completionChannel <- j.ID
 	}
 }
 

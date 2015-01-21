@@ -12,7 +12,7 @@ The Agent is written in Go and runs fine on most Linux distros, OS X, and Window
 
 ## Quickstart
 
-If you want to use the Agent in conjunction with an existing plugin, all you need to do is write a configuration file, compile the Agent for your platform, and deploy both to a location that has access to the resources from which you want to pull data.
+If you want to use the Agent in conjunction with an existing plugin, all you need to do is write a configuration file, compile the Agent for your platform, and deploy both to a location that has access to the resources from which you want to pull data. Binaries for common platforms are available in the `bin` folder as well.
 
 ```yaml
 accounts: 
@@ -30,19 +30,22 @@ accounts:
 
 The configuration file is written in [YAML](http://www.yaml.org), a text-based markup language that requires little in the way of formatting.
 
-The topmost object in the configuration file is an object that contains an array of account entries. Each account entry, in turn, provides the API key of the Telemetry account to which you want to write, as well as the interval at which updates are sent to the Telemetry API.
+The topmost object in the configuration file is an object that contains an array of account entries. Each account entry, in turn, provides the API key of the Telemetry account to which you want to write, as well as the interval at which updates are sent to the Telemetry API (`submission_interval`).
 
 In addition, each account entry contains a list of jobs, which tell the Agent exactly what you want it to do. A job contains:
 
   - A unique `id` that identifies it. This must be unique across your entire configuration file.
-  - A `submission_interval` that determines how often data is sent to the Telemetry API. The Agent coalesces updates and sends them at this interval in order to reduce your API usage.
   - A `config` hash that contains the configuration for the plugin. The contents of this hash depend on which plugin you use
 
-### Running the Agent
+## Running the Agent
 
-The Agent should compile without problems on any platform that is supported by [Go](http://golang.org). Once compiled, you can deploy the Agent's executable and point it to the config file thusly:
+The agent has three modes of operation: scheduled, run-once, and immediate.
 
-`agent -config /var/telemetry/agent_config.yaml`
+In scheduled mode, the agent runs continuously until it is manually stopped; each job determines the frequency with which it is executed, for example on a fixed schedule, or when certain environmental conditions change.
+
+In run-once mode, the agent executes every job exactly once, then terminates. This allows you to schedule the agent's execute externally—for example, using a cron job—instead of relying on a plugin's scheduling capabilities.
+
+In immediate mode, you can pipe a Telemetry API update to the agent, which will take care of formatting it and submitting it on your behalf.
 
 ## Plugins
 
