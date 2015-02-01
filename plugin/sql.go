@@ -45,6 +45,7 @@ type SQLPlugin struct {
 // Function Init initializes the plugin.
 //
 // The required configuration parameters are:
+//
 // - driver                       The SQL driver to use
 //
 // - datasource                   The datasource on which to operate

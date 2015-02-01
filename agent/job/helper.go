@@ -2,6 +2,7 @@ package job
 
 import (
 	"github.com/telemetryapp/gotelemetry"
+	"gopkg.in/fsnotify.v1"
 	"sync"
 	"time"
 )
@@ -79,6 +80,36 @@ func (e *PluginHelper) AddTaskWithClosure(c PluginHelperClosure, interval time.D
 	}
 
 	e.addTask(t, c)
+}
+
+func (e *PluginHelper) AddTaskWithFileObservation(c PluginHelperClosure, path string) {
+	t := func(job *Job, doneChannel chan bool) {
+		watcher, err := fsnotify.NewWatcher()
+
+		if err != nil {
+			panic(err)
+		}
+
+		watcher.Add(path)
+
+		for {
+			c(job)
+
+			select {
+			case <-doneChannel:
+				watcher.Close()
+				return
+
+			case <-watcher.Events:
+				break
+
+			case err := <-watcher.Errors:
+				job.ReportError(err)
+			}
+		}
+	}
+
+	e.addTask(t, nil)
 }
 
 // Adds a task associated with a flow taken from a map of flows. You can obtain a map of flows by calling
