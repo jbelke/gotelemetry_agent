@@ -52,6 +52,10 @@ func NewJobManager(config config.ConfigInterface, errorChannel *chan error, comp
 
 		apiKey := account.APIKey
 
+		if apiKey == "" {
+			apiKey = account.APIToken
+		}
+
 		credentials, success := result.credentials[apiKey]
 
 		if !success {

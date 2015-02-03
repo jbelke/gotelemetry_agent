@@ -34,6 +34,7 @@ type Job struct {
 
 type AccountConfig struct {
 	APIKey             string  `yaml:"api_key"`
+	APIToken           string  `yaml:"api_token"`
 	SubmissionInterval float64 `yaml:"submission_interval"`
 	Jobs               []Job   `yaml:"jobs"`
 }
