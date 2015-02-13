@@ -1,6 +1,7 @@
 package job
 
 import (
+	"errors"
 	"github.com/telemetryapp/gotelemetry"
 )
 
@@ -46,7 +47,7 @@ func GetPlugin(name string) (PluginFactory, error) {
 	result, success := manager.factories[name]
 
 	if !success {
-		return nil, gotelemetry.NewError(500, "Plugin `"+name+"` not found")
+		return nil, errors.New("Plugin `" + name + "` not found")
 	}
 
 	return result, nil

@@ -3,7 +3,6 @@ package plugin
 import (
 	"database/sql"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/evanphx/json-patch"
 	"github.com/telemetryapp/gotelemetry"
@@ -38,7 +37,6 @@ type SQLPlugin struct {
 	patch          string
 	flowTag        string
 	variant        string
-	template       map[string]interface{}
 	flow           *gotelemetry.Flow
 }
 
@@ -91,7 +89,6 @@ func (p *SQLPlugin) Init(job *job.Job) error {
 	p.query = c["query"].(string)
 	p.flowTag = c["flow_tag"].(string)
 	p.variant = c["variant"].(string)
-	p.template = config.MapFromYaml(c["template"]).(map[string]interface{})
 
 	patch, err := json.Marshal(config.MapFromYaml(c["patch"]))
 
@@ -102,36 +99,10 @@ func (p *SQLPlugin) Init(job *job.Job) error {
 
 	p.patch = string(patch)
 
-	p.flow, err = job.GetFlowTagLayout(p.flowTag)
+	p.flow, err = job.GetOrCreateFlow(p.flowTag, p.variant, c["template"])
 
-	if err == nil {
-		if p.flow.Variant != p.variant {
-			return errors.New("Flow " + p.flow.Id + " is of type " + p.flow.Variant + " instead of the expected " + p.variant)
-		}
-	} else {
-		p.flow, err = job.CreateFlow(p.flowTag, p.variant, "gotelemetry_agent", "", "")
-
-		if err != nil {
-			return err
-		}
-
-		err = job.ReadFlow(p.flow)
-
-		if err != nil {
-			return err
-		}
-
-		err = p.flow.Populate(p.variant, p.template)
-
-		if err != nil {
-			return err
-		}
-
-		err = job.PostImmediateFlowUpdate(p.flow)
-
-		if err != nil {
-			return err
-		}
+	if err != nil {
+		return err
 	}
 
 	if refresh, ok := c["refresh"]; ok {
@@ -145,6 +116,8 @@ func (p *SQLPlugin) Init(job *job.Job) error {
 
 func (p *SQLPlugin) performAllTasks(j *job.Job) {
 	j.Log("Starting SQL plugin...")
+
+	defer p.PluginHelper.TrackTime(j, time.Now(), "SQL plugin completed in %s.")
 
 	db, err := sql.Open(p.driverName, p.datasourceName)
 
@@ -243,9 +216,7 @@ func (p *SQLPlugin) performAllTasks(j *job.Job) {
 		j.ReportError(err)
 	}
 
-	j.Logf("Posting flow %s", p.flow.Id)
+	j.Logf("Posting flow %s (%s)", p.flowTag, p.flow.Id)
 
 	j.PostFlowUpdate(p.flow)
-
-	j.Log("SQL plugin complete.")
 }

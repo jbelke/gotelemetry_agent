@@ -188,3 +188,15 @@ func (e *PluginHelper) Terminate(job *Job) {
 	e.doneChannel <- true
 	e.waitGroup.Wait()
 }
+
+// TrackTime can be used in a deferred call near the beginning of a function
+// to automatically determine how long that function runs for.
+//
+// For example:
+//
+// 		func test(j *Job) {
+// 			defer plugin.TrackTime(job, time.Now(), "Function test took %s to run.")
+// 		}
+func (e *PluginHelper) TrackTime(job *Job, start time.Time, template string) {
+	job.Logf(template, time.Since(start))
+}

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"github.com/evanphx/json-patch"
 	"github.com/telemetryapp/gotelemetry"
-	"github.com/telemetryapp/gotelemetry_agent/agent/config"
 	"github.com/telemetryapp/gotelemetry_agent/agent/job"
 	"os"
 	"os/exec"
@@ -32,7 +31,7 @@ func ProcessPluginFactory() job.PluginInstance {
 // For configuration parameters, see the Init() function
 type ProcessPlugin struct {
 	*job.PluginHelper
-	tag      string
+	flowTag  string
 	path     string
 	variant  string
 	template map[string]interface{}
@@ -81,18 +80,18 @@ type ProcessPlugin struct {
 //   <?php
 //   echo "PATCH\n";
 //   echo '[{"op":"replace", "path":"/value", "value":123}]';
+
 func (p *ProcessPlugin) Init(job *job.Job) error {
 	c := job.Config()
-	p.tag = c["flow_tag"].(string)
+	p.flowTag = c["flow_tag"].(string)
 	p.path = c["path"].(string)
 	p.variant = c["variant"].(string)
-	p.template = config.MapFromYaml(c["template"]).(map[string]interface{})
 
 	if _, err := os.Stat(p.path); os.IsNotExist(err) {
 		return errors.New("File " + p.path + " does not exist.")
 	}
 
-	if f, err := job.GetOrCreateFlow(p.tag, p.variant, "gotelemetry_agent", p.template); err != nil {
+	if f, err := job.GetOrCreateFlow(p.flowTag, p.variant, c["template"]); err != nil {
 		return err
 	} else {
 		p.flow = f
@@ -108,6 +107,10 @@ func (p *ProcessPlugin) Init(job *job.Job) error {
 }
 
 func (p *ProcessPlugin) performAllTasks(j *job.Job) {
+	j.Logf("Starting process plugin...")
+
+	defer p.PluginHelper.TrackTime(j, time.Now(), "Process plugin completed in %s.")
+
 	if err := j.ReadFlow(p.flow); err != nil {
 		j.ReportError(err)
 		return
@@ -152,7 +155,7 @@ func (p *ProcessPlugin) performAllTasks(j *job.Job) {
 			}
 		}
 
-		j.Logf("Posting flow %s", p.flow.Id)
+		j.Logf("Posting flow %s (%s)", p.flowTag, p.flow.Id)
 
 		j.PostFlowUpdate(p.flow)
 

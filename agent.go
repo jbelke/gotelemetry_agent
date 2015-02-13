@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/telemetryapp/gotelemetry_agent/agent/config"
 	"github.com/telemetryapp/gotelemetry_agent/agent/job"
 	"log"
@@ -25,8 +24,7 @@ func main() {
 	config, err := config.NewConfigFile()
 
 	if err != nil {
-		fmt.Printf("Initialization error: %s", err)
-		return
+		log.Fatalf("Initialization error: %s", err)
 	}
 
 	errorChannel := make(chan error, 0)
@@ -35,7 +33,7 @@ func main() {
 	_, err = job.NewJobManager(config, &errorChannel, &completionChannel)
 
 	if err != nil {
-		panic(err)
+		log.Fatalf("Initialization error: %s", err)
 	}
 
 	for {

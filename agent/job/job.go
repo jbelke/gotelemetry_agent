@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/telemetryapp/gotelemetry"
+	"github.com/telemetryapp/gotelemetry_agent/agent/config"
 	"log"
 )
 
@@ -49,7 +50,7 @@ func (j *Job) start(wait bool) {
 	err := j.instance.Init(j)
 
 	if err != nil {
-		println("Error initializing " + j.ID)
+		j.ReportError(errors.New("Error initializing the job `" + j.ID + "`"))
 		j.ReportError(err)
 		return
 
@@ -100,7 +101,7 @@ func (j *Job) GetFlowTagLayout(tag string) (*gotelemetry.Flow, error) {
 	return gotelemetry.GetFlowLayoutWithTag(j.credentials, tag)
 }
 
-func (j *Job) GetOrCreateFlow(tag, variant, agent string, template map[string]interface{}) (*gotelemetry.Flow, error) {
+func (j *Job) GetOrCreateFlow(tag, variant string, template interface{}) (*gotelemetry.Flow, error) {
 	f, err := j.GetFlowTagLayout(tag)
 
 	if err == nil {
@@ -111,27 +112,37 @@ func (j *Job) GetOrCreateFlow(tag, variant, agent string, template map[string]in
 		return f, nil
 	}
 
-	f, err = j.CreateFlow(tag, variant, agent, "", "")
+	if template != nil {
+		template = config.MapFromYaml(template)
 
-	if err != nil {
-		return nil, err
+		if template, ok := template.(map[string]interface{}); ok {
+			f, err = j.CreateFlow(tag, variant, "gotelemetry_agent", "", "")
+
+			if err != nil {
+				return nil, err
+			}
+
+			err = j.ReadFlow(f)
+
+			if err != nil {
+				return nil, err
+			}
+
+			err = f.Populate(variant, template)
+
+			if err != nil {
+				return nil, err
+			}
+
+			err = j.PostImmediateFlowUpdate(f)
+
+			return f, err
+		}
+
+		return nil, errors.New("The `template` property is present in the configuration, but is the wrong type.")
 	}
 
-	err = j.ReadFlow(f)
-
-	if err != nil {
-		return nil, err
-	}
-
-	err = f.Populate(variant, template)
-
-	if err != nil {
-		return nil, err
-	}
-
-	err = j.PostImmediateFlowUpdate(f)
-
-	return f, err
+	return nil, errors.New(fmt.Sprintf("The flow with the tag `%s` could not be found, and no template was provided to create it. This job will not run.", tag))
 }
 
 // ReadFlow populates a flow struct with the data that is currently on the server
@@ -172,7 +183,9 @@ func (j *Job) PerformSubtasks() {
 
 // Log sends data to the agent's global log. It works like log.Log
 func (j *Job) Log(v ...interface{}) {
-	log.Printf("%s -> %s", j.ID, fmt.Sprint(v))
+	for _, val := range v {
+		log.Printf("%s -> %s", j.ID, fmt.Sprint(val))
+	}
 }
 
 // Log sends a formatted string to the agent's global log. It works like log.Logf
