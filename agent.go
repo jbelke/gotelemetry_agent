@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/telemetryapp/gotelemetry_agent/agent/config"
 	"github.com/telemetryapp/gotelemetry_agent/agent/job"
 	"log"
@@ -8,11 +9,24 @@ import (
 	_ "github.com/telemetryapp/gotelemetry_agent/plugin"
 )
 
+func banner() {
+	println()
+	println("Telemetry Agent v 1.1")
+	println("Copyright © 2012-2015 Telemetry, Inc.")
+	println()
+	println("For license information, see the LICENSE file")
+	println("---------------------------------------------")
+	println()
+}
+
 func main() {
+	banner()
+
 	config, err := config.NewConfigFile()
 
 	if err != nil {
-		panic(err)
+		fmt.Printf("Initialization error: %s", err)
+		return
 	}
 
 	errorChannel := make(chan error, 0)
