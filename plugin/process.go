@@ -3,7 +3,7 @@ package plugin
 import (
 	"encoding/json"
 	"errors"
-	"github.com/evanphx/json-patch"
+	"fmt"
 	"github.com/telemetryapp/gotelemetry"
 	"github.com/telemetryapp/gotelemetry_agent/agent/job"
 	"os"
@@ -33,7 +33,7 @@ type ProcessPlugin struct {
 	*job.PluginHelper
 	flowTag  string
 	path     string
-	variant  string
+	args     []string
 	template map[string]interface{}
 	flow     *gotelemetry.Flow
 }
@@ -44,20 +44,26 @@ type ProcessPlugin struct {
 //
 // - path                         The executable's path
 //
+// - args													An array of arguments that are sent to the executable
+//
 // - flow_tag                     The tag of the flow to populate
 //
 // - variant                      The variant of the flow
 //
 // - template                     A template that will be used to populate the flow when it is created
 //
-// When the plugin is executed, it loads up the current state of the flow
-// and sends it to the external process as its only parameter.
+// If `variant` and `template` are both specified, the plugin will verify that the flow exists and is of the
+// correct variant on startup. In that case, if the flow is found but is of the wrong variant, an error is
+// output to log and the plugin is not allowed to run. If the flow does not exist, it is created using
+// the contents of `template`. If the creation fails, the plugin is not allowed to run.
 //
 // In output, the process has two options:
 //
-// - Output a JSON payload, which is used to replace the payload of the flow, which is then automatically submitted to the Telemetry API
+// - Output a JSON payload, which is used to PATCH the payload of the flow using a simple top-level property replacement operation
 //
 // - Output the text PATCH, followed by a newline, followed by a JSON-Patch payload that is applied to the flow.
+//
+// - Output the text REPLACE, followed by a newline, followed by a payload that is used to replace the contents of the flow.
 //
 // For example:
 //
@@ -67,6 +73,9 @@ type ProcessPlugin struct {
 //      config:
 //        refresh: 86400
 //        path: ./test.php
+//        args:
+//        	- value
+//        	- 1
 //        flow_tag: php_test
 //        variant: value
 //        template:
@@ -79,28 +88,90 @@ type ProcessPlugin struct {
 //   #!/usr/bin/php
 //   <?php
 //   echo "PATCH\n";
-//   echo '[{"op":"replace", "path":"/value", "value":123}]';
+//   echo '[{"op":"replace", "path":"/value", "value":' + argv[2] + '}]';
 
 func (p *ProcessPlugin) Init(job *job.Job) error {
+	var ok bool
+
 	c := job.Config()
-	p.flowTag = c["flow_tag"].(string)
-	p.path = c["path"].(string)
-	p.variant = c["variant"].(string)
+
+	job.Debugf("The configuration is %#v", c)
+
+	p.flowTag, ok = c["flow_tag"].(string)
+
+	if !ok {
+		return errors.New("The required `flow_tag` property (`string`) is either missing or of the wrong type.")
+	}
+
+	p.path, ok = c["path"].(string)
+
+	if !ok {
+		return errors.New("The required `path` property (`string`) is either missing or of the wrong type.")
+	}
+
+	p.args = []string{}
+
+	if args, ok := c["args"].([]interface{}); ok {
+		for _, arg := range args {
+			if a, ok := arg.(string); ok {
+				p.args = append(p.args, a)
+			} else {
+				p.args = append(p.args, fmt.Sprintf("%#v", arg))
+			}
+		}
+	}
 
 	if _, err := os.Stat(p.path); os.IsNotExist(err) {
 		return errors.New("File " + p.path + " does not exist.")
 	}
 
-	if f, err := job.GetOrCreateFlow(p.flowTag, p.variant, c["template"]); err != nil {
-		return err
-	} else {
-		p.flow = f
+	template, templateOK := c["template"]
+	variant, variantOK := c["variant"].(string)
+
+	if variantOK && templateOK {
+		if f, err := job.GetOrCreateFlow(p.flowTag, variant, template); err != nil {
+			return err
+		} else {
+			p.flow = f
+		}
 	}
 
-	if refresh, ok := c["refresh"]; ok {
-		p.PluginHelper.AddTaskWithClosure(p.performAllTasks, time.Duration(refresh.(int))*time.Second)
+	if refresh, ok := c["refresh"].(int); ok {
+		p.PluginHelper.AddTaskWithClosure(p.performAllTasks, time.Duration(time.Duration(refresh)*time.Second))
 	} else {
 		p.PluginHelper.AddTaskWithClosure(p.performAllTasks, 0)
+	}
+
+	return nil
+}
+
+func (p *ProcessPlugin) analyzeAndSubmitProcessResponse(j *job.Job, response string) error {
+	var data interface{}
+
+	if strings.HasPrefix(response, "PATCH\n") {
+		err := json.Unmarshal([]byte(strings.TrimPrefix(response, "PATCH\n")), &data)
+
+		if err != nil {
+			return err
+		}
+
+		j.QueueDataUpdate(p.flowTag, data, gotelemetry.BatchTypeJSONPATCH)
+	} else if strings.HasPrefix(response, "REPLACE\n") {
+		err := json.Unmarshal([]byte(strings.TrimPrefix(response, "REPLACE\n")), &data)
+
+		if err != nil {
+			return err
+		}
+
+		j.QueueDataUpdate(p.flowTag, data, gotelemetry.BatchTypePOST)
+	} else {
+		err := json.Unmarshal([]byte(response), &data)
+
+		if err != nil {
+			return err
+		}
+
+		j.QueueDataUpdate(p.flowTag, data, gotelemetry.BatchTypePATCH)
 	}
 
 	return nil
@@ -111,55 +182,27 @@ func (p *ProcessPlugin) performAllTasks(j *job.Job) {
 
 	defer p.PluginHelper.TrackTime(j, time.Now(), "Process plugin completed in %s.")
 
-	if err := j.ReadFlow(p.flow); err != nil {
-		j.ReportError(err)
-		return
-	}
-
-	if flowData, err := json.Marshal(p.flow.Data); err != nil {
-		j.ReportError(err)
-		return
+	if len(p.args) > 0 {
+		j.Debugf("Executing `%s` with arguments %#v", p.path, p.args)
 	} else {
-		out, err := exec.Command(p.path, string(flowData)).Output()
-
-		if err != nil {
-			j.ReportError(err)
-			return
-		}
-
-		if strings.HasPrefix(string(out), "PATCH") {
-			out = []byte(strings.TrimPrefix(string(out), "PATCH\n"))
-
-			patch, err := jsonpatch.DecodePatch(out)
-
-			if err != nil {
-				j.ReportError(err)
-				return
-			}
-
-			flowData, err = patch.Apply(flowData)
-
-			if err != nil {
-				j.ReportError(err)
-				return
-			}
-
-			if err := json.Unmarshal(flowData, p.flow.Data); err != nil {
-				j.ReportError(err)
-				return
-			}
-		} else {
-			if err := json.Unmarshal(out, p.flow.Data); err != nil {
-				j.ReportError(err)
-				return
-			}
-		}
-
-		j.Logf("Posting flow %s (%s)", p.flowTag, p.flow.Id)
-
-		j.PostFlowUpdate(p.flow)
-
-		j.Log("Process plugin complete.")
+		j.Debugf("Executing `%s` with no arguments", p.path)
 	}
 
+	out, err := exec.Command(p.path, p.args...).Output()
+
+	if err != nil {
+		j.ReportError(err)
+		return
+	}
+
+	response := string(out)
+
+	j.Debugf("Process output: %s", response)
+	j.Logf("Posting flow %s", p.flowTag)
+
+	if err := p.analyzeAndSubmitProcessResponse(j, response); err != nil {
+		j.ReportError(errors.New("Unable to analyze process output: " + err.Error()))
+	}
+
+	j.Log("Process plugin complete.")
 }

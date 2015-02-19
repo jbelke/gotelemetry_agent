@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"github.com/telemetryapp/gotelemetry"
 	"github.com/telemetryapp/gotelemetry_agent/agent/config"
-	"log"
 )
 
 type Job struct {
@@ -156,11 +155,17 @@ func (j *Job) ReadFlow(f *gotelemetry.Flow) error {
 // will most likely be sent to the Telemetry API at a later point based on the configuration
 // of the underlying stream
 func (j *Job) PostFlowUpdate(flow *gotelemetry.Flow) {
-	j.stream.C <- flow
+	j.stream.Send(flow)
 }
 
 func (j *Job) PostImmediateFlowUpdate(flow *gotelemetry.Flow) error {
 	return flow.PostUpdate()
+}
+
+// PostDataUpdate queues a data update. The update can contain arbitrary data that is
+// sent to the API without any client-side validation.
+func (j *Job) QueueDataUpdate(tag string, data interface{}, updateType gotelemetry.BatchType) {
+	j.stream.SendData(tag, data, updateType)
 }
 
 // ReportError sends a formatted error to the agent's global error log. This should be
@@ -184,11 +189,22 @@ func (j *Job) PerformSubtasks() {
 // Log sends data to the agent's global log. It works like log.Log
 func (j *Job) Log(v ...interface{}) {
 	for _, val := range v {
-		log.Printf("%s -> %s", j.ID, fmt.Sprint(val))
+		if j.errorChannel != nil {
+			*j.errorChannel <- gotelemetry.NewLogError("%s -> %#v", j.ID, val)
+		}
 	}
 }
 
-// Log sends a formatted string to the agent's global log. It works like log.Logf
+// Logf sends a formatted string to the agent's global log. It works like log.Logf
 func (j *Job) Logf(format string, v ...interface{}) {
-	log.Printf("%s -> %s", j.ID, fmt.Sprintf(format, v...))
+	if j.errorChannel != nil {
+		*j.errorChannel <- gotelemetry.NewLogError("%s -> %#s", j.ID, fmt.Sprintf(format, v...))
+	}
+}
+
+// Debugf sends a formatted string to the agent's debug log, if it exists. It works like log.Logf
+func (j *Job) Debugf(format string, v ...interface{}) {
+	if j.errorChannel != nil {
+		*j.errorChannel <- gotelemetry.NewDebugError("%s -> %#s", j.ID, fmt.Sprintf(format, v...))
+	}
 }

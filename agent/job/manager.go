@@ -38,7 +38,7 @@ func createJob(credentials gotelemetry.Credentials, accountStream *gotelemetry.B
 	return newJob(credentials, accountStream, jobDescription.ID, jobDescription.Config, then, pluginInstance, errorChannel, jobCompletionChannel, wait)
 }
 
-func NewJobManager(config config.ConfigInterface, errorChannel *chan error, completionChannel *chan bool) (*JobManager, error) {
+func NewJobManager(jobConfig config.ConfigInterface, errorChannel *chan error, completionChannel *chan bool) (*JobManager, error) {
 	result := &JobManager{
 		credentials:          map[string]gotelemetry.Credentials{},
 		accountStreams:       map[string]*gotelemetry.BatchStream{},
@@ -47,7 +47,7 @@ func NewJobManager(config config.ConfigInterface, errorChannel *chan error, comp
 		jobCompletionChannel: make(chan string),
 	}
 
-	for _, account := range config.Accounts() {
+	for _, account := range jobConfig.Accounts() {
 		var err error
 
 		apiKey := account.APIKey
@@ -59,11 +59,13 @@ func NewJobManager(config config.ConfigInterface, errorChannel *chan error, comp
 		credentials, success := result.credentials[apiKey]
 
 		if !success {
-			credentials, err = gotelemetry.NewCredentials(account.APIKey)
+			credentials, err = gotelemetry.NewCredentials(apiKey)
 
 			if err != nil {
 				return nil, err
 			}
+
+			credentials.SetDebugChannel(errorChannel)
 
 			result.credentials[apiKey] = credentials
 		}
@@ -83,6 +85,23 @@ func NewJobManager(config config.ConfigInterface, errorChannel *chan error, comp
 		for _, jobDescription := range account.Jobs {
 			jobId := jobDescription.ID
 
+			if jobId == "" {
+				if tag, ok := jobDescription.Config["flow_tag"].(string); ok {
+					jobId = tag
+					jobDescription.ID = tag
+				} else {
+					return nil, gotelemetry.NewError(500, "Job ID missing and no `flow_tag` provided.")
+				}
+			}
+
+			if !config.CLIConfig.Filter.MatchString(jobId) {
+				continue
+			}
+
+			if config.CLIConfig.ForceRunOnce {
+				delete(jobDescription.Config, "refresh")
+			}
+
 			_, success := result.jobs[jobId]
 
 			if success {
@@ -97,6 +116,10 @@ func NewJobManager(config config.ConfigInterface, errorChannel *chan error, comp
 
 			result.jobs[job.ID] = job
 		}
+	}
+
+	if len(result.jobs) == 0 {
+		return nil, gotelemetry.NewError(400, "No jobs to run. Exiting.")
 	}
 
 	go result.monitorDoneChannel()

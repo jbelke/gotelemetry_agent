@@ -44,6 +44,10 @@ func AllPlugins() map[string]PluginFactory {
 }
 
 func GetPlugin(name string) (PluginFactory, error) {
+	if name == "" {
+		name = "com.telemetryapp.process"
+	}
+
 	result, success := manager.factories[name]
 
 	if !success {
