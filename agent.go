@@ -11,7 +11,7 @@ import (
 
 func banner() {
 	println()
-	println("Telemetry Agent v 1.1")
+	println("Telemetry Agent v " + config.AgentVersion)
 	println("Copyright © 2012-2015 Telemetry, Inc.")
 	println()
 	println("For license information, see the LICENSE file")

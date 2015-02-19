@@ -137,7 +137,7 @@ func (p *ProcessPlugin) Init(job *job.Job) error {
 	}
 
 	if refresh, ok := c["refresh"].(int); ok {
-		p.PluginHelper.AddTaskWithClosure(p.performAllTasks, time.Duration(time.Duration(refresh)*time.Second))
+		p.PluginHelper.AddTaskWithClosure(p.performAllTasks, time.Duration(refresh)*time.Second)
 	} else {
 		p.PluginHelper.AddTaskWithClosure(p.performAllTasks, 0)
 	}
@@ -197,7 +197,7 @@ func (p *ProcessPlugin) performAllTasks(j *job.Job) {
 
 	response := string(out)
 
-	j.Debugf("Process output: %s", response)
+	j.Debugf("Process output: %s", strings.Replace(response, "\n", "\\n", -1))
 	j.Logf("Posting flow %s", p.flowTag)
 
 	if err := p.analyzeAndSubmitProcessResponse(j, response); err != nil {

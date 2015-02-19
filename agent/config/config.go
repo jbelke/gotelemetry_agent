@@ -1,7 +1,7 @@
 package config
 
 import (
-	"flag"
+	"github.com/alecthomas/kingpin"
 	"github.com/telemetryapp/gotelemetry"
 	"log"
 	"regexp"
@@ -14,16 +14,20 @@ type CLIConfigType struct {
 	ForceRunOnce       bool
 }
 
+const AgentVersion = "1.2"
+
 var CLIConfig CLIConfigType
 
 func init() {
-	flag.StringVar(&CLIConfig.ConfigFileLocation, "config", "/var/telemetry/gotelemetry_agent.yaml", "Location of the agent configuration file")
-	flag.BoolVar(&CLIConfig.ForceRunOnce, "once", false, "Run all jobs exactly once and exit")
+	kingpin.Version(AgentVersion)
 
-	filter := flag.String("filter", "", "Run only the jobs whose IDs (or tags if no ID is specified) match the given regular expression")
-	logLevel := flag.String("v", "log", "Set the verbosity level (`debug`, `log`, `error`; default `log`)")
+	kingpin.Flag("config", "Path to the configuration file for this agent.").Short('c').Default("./gotelemetry_agent.yaml").StringVar(&CLIConfig.ConfigFileLocation)
+	kingpin.Flag("once", "Run all jobs exactly once and exit.").Default("false").BoolVar(&CLIConfig.ForceRunOnce)
 
-	flag.Parse()
+	logLevel := kingpin.Flag("verbosity", "Set the verbosity level (`debug`, `log`, `error`).").Short('v').Default("log").Enum("debug", "log", "error")
+	filter := kingpin.Flag("filter", "Run only the jobs whose IDs (or tags if no ID is specified) match the given regular expression").Default(".").String()
+
+	kingpin.Parse()
 
 	switch *logLevel {
 	case "debug":

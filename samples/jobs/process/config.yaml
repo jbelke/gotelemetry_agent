@@ -3,7 +3,7 @@ accounts:
     submission_interval: 1
     jobs:
       - config:
-          refresh: 1
+          refresh: 10
           path: ./demo.php
           args:
             - value
