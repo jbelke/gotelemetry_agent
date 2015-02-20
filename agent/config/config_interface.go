@@ -1,5 +1,10 @@
 package config
 
+import (
+	"errors"
+	"os"
+)
+
 func MapFromYaml(from interface{}) interface{} {
 	switch from.(type) {
 	case map[interface{}]interface{}:
@@ -43,12 +48,20 @@ type ConfigInterface interface {
 	Accounts() []AccountConfig
 }
 
-func (a AccountConfig) GetAPIKey() string {
+func (a AccountConfig) GetAPIKey() (string, error) {
 	result := a.APIKey
 
 	if result == "" {
 		result = a.APIToken
 	}
 
-	return result
+	if result == "" {
+		result = os.ExpandEnv("$TELEMETRY_API_TOKEN")
+	}
+
+	if result != "" {
+		return result, nil
+	}
+
+	return "", errors.New("No API Token found in the configuration file or in the TELEMETRY_API_TOKEN environment variable.")
 }

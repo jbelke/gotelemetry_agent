@@ -50,7 +50,11 @@ func NewJobManager(jobConfig config.ConfigInterface, errorChannel *chan error, c
 	for _, account := range jobConfig.Accounts() {
 		var err error
 
-		apiKey := account.GetAPIKey()
+		apiKey, err := account.GetAPIKey()
+
+		if err != nil {
+			return nil, err
+		}
 
 		credentials, success := result.credentials[apiKey]
 

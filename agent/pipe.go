@@ -23,16 +23,25 @@ func ProcessPipeRequest(configFile *config.ConfigFile, errorChannel chan error, 
 		errorChannel <- gotelemetry.NewDebugError("Will perform a Rails-style HTTP PATCH operation")
 	}
 
-	credentials, err := gotelemetry.NewCredentials(configFile.Accounts()[0].GetAPIKey())
+	apiKey, err := configFile.Accounts()[0].GetAPIKey()
 
 	if err != nil {
 		errorChannel <- err
+		completionChannel <- true
+
+		return
+	}
+
+	credentials, err := gotelemetry.NewCredentials(apiKey)
+
+	if err != nil {
+		errorChannel <- err
+		completionChannel <- true
+
 		return
 	}
 
 	credentials.SetDebugChannel(&errorChannel)
-
-	b := gotelemetry.Batch{}
 
 	updates := map[string]interface{}{}
 
@@ -40,8 +49,12 @@ func ProcessPipeRequest(configFile *config.ConfigFile, errorChannel chan error, 
 
 	if err != nil {
 		errorChannel <- err
-		goto Done
+		completionChannel <- true
+
+		return
 	}
+
+	b := gotelemetry.Batch{}
 
 	for tag, update := range updates {
 		b.SetData(tag, update)
@@ -54,8 +67,6 @@ func ProcessPipeRequest(configFile *config.ConfigFile, errorChannel chan error, 
 	}
 
 	errorChannel <- gotelemetry.NewLogError("Processing complete. Exiting.")
-
-Done:
 
 	completionChannel <- true
 }

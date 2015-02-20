@@ -15,6 +15,10 @@ func NewConfigFile() (*ConfigFile, error) {
 	source, err := ioutil.ReadFile(CLIConfig.ConfigFileLocation)
 
 	if err != nil {
+		if CLIConfig.IsPiping {
+			return &ConfigFile{[]AccountConfig{AccountConfig{}}}, nil
+		}
+
 		return nil, errors.New(fmt.Sprintf("Unable to open configuration file at %s. Did you use --config to specify the right path?\n\n", CLIConfig.ConfigFileLocation))
 	}
 
