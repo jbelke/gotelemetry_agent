@@ -88,7 +88,7 @@ type ProcessPlugin struct {
 //   #!/usr/bin/php
 //   <?php
 //   echo "PATCH\n";
-//   echo '[{"op":"replace", "path":"/value", "value":' + argv[2] + '}]';
+//   echo '[{"op":"replace", "path":"/value", "value":' + $argv[2] + '}]';
 
 func (p *ProcessPlugin) Init(job *job.Job) error {
 	var ok bool

@@ -8,7 +8,7 @@ import (
 )
 
 type ConfigFile struct {
-	AllAccounts []AccountConfig `yaml:"accounts"`
+	AllAccounts []AccountConfig
 }
 
 func NewConfigFile() (*ConfigFile, error) {
@@ -18,11 +18,11 @@ func NewConfigFile() (*ConfigFile, error) {
 		return nil, errors.New(fmt.Sprintf("Unable to open configuration file at %s. Did you use --config to specify the right path?\n\n", CLIConfig.ConfigFileLocation))
 	}
 
-	result := &ConfigFile{}
+	result := &AccountConfig{}
 
 	err = yaml.Unmarshal(source, result)
 
-	return result, err
+	return &ConfigFile{[]AccountConfig{*result}}, err
 }
 
 func (c *ConfigFile) Accounts() []AccountConfig {

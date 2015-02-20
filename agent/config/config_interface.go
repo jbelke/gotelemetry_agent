@@ -42,3 +42,13 @@ type AccountConfig struct {
 type ConfigInterface interface {
 	Accounts() []AccountConfig
 }
+
+func (a AccountConfig) GetAPIKey() string {
+	result := a.APIKey
+
+	if result == "" {
+		result = a.APIToken
+	}
+
+	return result
+}

@@ -1,11 +1,13 @@
-accounts: 
-  - api_token: aa36622236b0f06f863d6d2c80090f717
-    submission_interval: 1
-    jobs:
-      - config:
-          refresh: 10
-          path: ./demo.php
-          args:
-            - value
-            - 132
-          flow_tag: test_marco_1
+api_token: <Your API Key>
+submission_interval: 1
+jobs:
+  - config:
+      refresh: 10
+      path: ./demo.php
+      args:
+        - value
+        - 1320
+      flow_tag: test_marco_1
+      variant: value
+      template:
+        value: 123
