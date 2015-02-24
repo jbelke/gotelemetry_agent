@@ -74,12 +74,13 @@ func run() {
 		}
 
 		agent.ProcessPipeRequest(configFile, errorChannel, completionChannel, payload)
+	} else if config.CLIConfig.IsNotifying {
+		agent.ProcessNotificationRequest(configFile, errorChannel, completionChannel, config.CLIConfig.NotificationChannel, config.CLIConfig.Notification)
 	} else {
 		_, err := job.NewJobManager(configFile, &errorChannel, &completionChannel)
 
 		if err != nil {
 			log.Fatalf("Initialization error: %s", err)
 		}
-
 	}
 }

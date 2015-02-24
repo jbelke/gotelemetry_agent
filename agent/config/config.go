@@ -4,17 +4,21 @@ import (
 	"github.com/alecthomas/kingpin"
 	"github.com/telemetryapp/gotelemetry"
 	"log"
+	"os"
 	"regexp"
 )
 
 type CLIConfigType struct {
-	ConfigFileLocation string
-	LogLevel           gotelemetry.LogLevel
-	Filter             *regexp.Regexp
-	ForceRunOnce       bool
-	IsPiping           bool
-	UseJSONPatch       bool
-	UsePOST            bool
+	ConfigFileLocation  string
+	LogLevel            gotelemetry.LogLevel
+	Filter              *regexp.Regexp
+	ForceRunOnce        bool
+	IsPiping            bool
+	UseJSONPatch        bool
+	UsePOST             bool
+	IsNotifying         bool
+	NotificationChannel string
+	Notification        gotelemetry.Notification
 }
 
 const AgentVersion = "1.2"
@@ -33,19 +37,45 @@ func banner() {
 
 func init() {
 	banner()
-	kingpin.Version(AgentVersion)
+	app := kingpin.New("telemetry_agent", "The Telemetry Agent")
 
-	kingpin.Flag("config", "Path to the configuration file for this agent.").Short('c').Default("./gotelemetry_agent.yaml").StringVar(&CLIConfig.ConfigFileLocation)
-	kingpin.Flag("once", "Run all jobs exactly once and exit.").Default("false").BoolVar(&CLIConfig.ForceRunOnce)
+	app.Version(AgentVersion)
 
-	kingpin.Flag("pipe", "Accept a Rails-style HTTP PATCH Telemetry payload from stdin, send it to the API, and then exit.").Default("false").BoolVar(&CLIConfig.IsPiping)
-	kingpin.Flag("jsonpatch", "With --pipe, submit the package as a JSON-Patch request instead. Ignored otherwise.").BoolVar(&CLIConfig.UseJSONPatch)
-	kingpin.Flag("post", "With --pipe, submit the package as a POST request instead. Ignored otherwise.").BoolVar(&CLIConfig.UsePOST)
+	app.Flag("config", "Path to the configuration file for this agent.").Short('c').Default("./gotelemetry_agent.yaml").StringVar(&CLIConfig.ConfigFileLocation)
 
-	logLevel := kingpin.Flag("verbosity", "Set the verbosity level (`debug`, `log`, `error`).").Short('v').Default("log").Enum("debug", "log", "error")
-	filter := kingpin.Flag("filter", "Run only the jobs whose IDs (or tags if no ID is specified) match the given regular expression").Default(".").String()
+	logLevel := app.Flag("verbosity", "Set the verbosity level (`debug`, `log`, `error`).").Short('v').Default("log").Enum("debug", "log", "error")
+	filter := app.Flag("filter", "Run only the jobs whose IDs (or tags if no ID is specified) match the given regular expression").Default(".").String()
 
-	kingpin.Parse()
+	once := app.Command("once", "Run all jobs exactly once and exit.")
+
+	pipe := app.Command("pipe", "Accept a Rails-style HTTP PATCH Telemetry payload from stdin, send it to the API, and then exit.")
+	pipe.Flag("jsonpatch", "With --pipe, submit the package as a JSON-Patch request instead. Ignored otherwise.").BoolVar(&CLIConfig.UseJSONPatch)
+	pipe.Flag("post", "With --pipe, submit the package as a POST request instead. Ignored otherwise.").BoolVar(&CLIConfig.UsePOST)
+
+	notify := app.Command("notify", "Send a channel notification.")
+	notify.Flag("channel", "The ID of the channel to which the notification is sent.").Required().StringVar(&CLIConfig.NotificationChannel)
+	notify.Flag("title", "The title of the notification.").Required().StringVar(&CLIConfig.Notification.Title)
+	notify.Flag("message", "The message to be displayed in the notification.").Required().StringVar(&CLIConfig.Notification.Message)
+	notify.Flag("icon", "An icon to be displayed in the notification.").StringVar(&CLIConfig.Notification.Icon)
+	notify.Flag("duration", "The amount of milliseconds for which the notification must be displayed.").Default("1000").IntVar(&CLIConfig.Notification.Duration)
+	notify.Flag("sound", "A URL to a notification sound (use `default` for Telemetry's default notification sound).").StringVar(&CLIConfig.Notification.SoundURL)
+
+	run := app.Command("run", "Runs the jobs scheduled in the configuration file provided.")
+
+	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
+	case once.FullCommand():
+		CLIConfig.ForceRunOnce = true
+
+	case pipe.FullCommand():
+		CLIConfig.IsPiping = true
+
+	case notify.FullCommand():
+		CLIConfig.IsNotifying = true
+
+	case run.FullCommand():
+	default:
+		// Do nothing, runs normally
+	}
 
 	switch *logLevel {
 	case "debug":
