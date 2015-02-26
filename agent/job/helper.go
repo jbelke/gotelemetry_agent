@@ -31,6 +31,7 @@ type PluginHelper struct {
 	closures    []PluginHelperClosure
 	doneChannel chan bool
 	waitGroup   *sync.WaitGroup
+	isRunning   bool
 }
 
 // Creates a new plugin helper and returns it
@@ -59,20 +60,28 @@ func (e *PluginHelper) AddTaskWithClosure(c PluginHelperClosure, interval time.D
 
 	if interval > 0 {
 		t = func(job *Job, doneChannel chan bool) {
-			t := time.NewTimer(interval)
-			t.Stop()
+			t := time.NewTicker(interval)
 
 			for {
-				c(job)
-
-				t.Reset(interval)
-
 				select {
 				case <-doneChannel:
 					t.Stop()
 					return
 
 				case <-t.C:
+					if e.isRunning {
+						job.Log("The previous instance of the job is still running; skipping this execution.")
+						continue
+					}
+
+					e.isRunning = true
+
+					go func() {
+						c(job)
+
+						e.isRunning = false
+					}()
+
 					break
 				}
 			}

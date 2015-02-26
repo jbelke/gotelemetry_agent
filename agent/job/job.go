@@ -190,7 +190,11 @@ func (j *Job) PerformSubtasks() {
 func (j *Job) Log(v ...interface{}) {
 	for _, val := range v {
 		if j.errorChannel != nil {
-			*j.errorChannel <- gotelemetry.NewLogError("%s -> %#v", j.ID, val)
+			if v, ok := val.(string); ok {
+				*j.errorChannel <- gotelemetry.NewLogError("%s -> %s", j.ID, v)
+			} else {
+				*j.errorChannel <- gotelemetry.NewLogError("%s -> %#v", j.ID, val)
+			}
 		}
 	}
 }

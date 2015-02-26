@@ -1,7 +1,7 @@
 submission_interval: 1
 jobs:
   - config:
-      refresh: 10
+      refresh: 1
       path: ./demo.php
       args:
         - value
