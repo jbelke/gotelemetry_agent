@@ -203,6 +203,4 @@ func (p *ProcessPlugin) performAllTasks(j *job.Job) {
 	if err := p.analyzeAndSubmitProcessResponse(j, response); err != nil {
 		j.ReportError(errors.New("Unable to analyze process output: " + err.Error()))
 	}
-
-	j.Log("Process plugin complete.")
 }

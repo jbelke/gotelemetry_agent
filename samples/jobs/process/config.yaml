@@ -1,4 +1,3 @@
-api_token: <Your API Token>
 submission_interval: 1
 jobs:
   - config:
