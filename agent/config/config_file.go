@@ -15,7 +15,7 @@ func NewConfigFile() (*ConfigFile, error) {
 	source, err := ioutil.ReadFile(CLIConfig.ConfigFileLocation)
 
 	if err != nil {
-		if CLIConfig.IsPiping {
+		if CLIConfig.IsPiping || CLIConfig.IsNotifying {
 			return &ConfigFile{[]AccountConfig{AccountConfig{}}}, nil
 		}
 

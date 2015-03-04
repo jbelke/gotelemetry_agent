@@ -58,8 +58,20 @@ func (e *PluginHelper) addTask(t pluginHelperTask, c PluginHelperClosure) {
 func (e *PluginHelper) AddTaskWithClosure(c PluginHelperClosure, interval time.Duration) {
 	var t pluginHelperTask = nil
 
+	runJob := func(j *Job) {
+		e.isRunning = true
+
+		go func(j *Job) {
+			c(j)
+
+			e.isRunning = false
+		}(j)
+	}
+
 	if interval > 0 {
 		t = func(job *Job, doneChannel chan bool) {
+			runJob(job)
+
 			t := time.NewTicker(interval)
 
 			for {
@@ -74,13 +86,7 @@ func (e *PluginHelper) AddTaskWithClosure(c PluginHelperClosure, interval time.D
 						continue
 					}
 
-					e.isRunning = true
-
-					go func() {
-						c(job)
-
-						e.isRunning = false
-					}()
+					runJob(job)
 
 					break
 				}

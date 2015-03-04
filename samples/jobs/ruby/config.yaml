@@ -1,0 +1,6 @@
+jobs:
+  - config:
+      flow_tag: test_flow
+      path: ./demo.rb
+      args:
+        - 1320
