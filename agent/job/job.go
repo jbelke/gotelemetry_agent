@@ -16,14 +16,14 @@ type Job struct {
 	credentials       gotelemetry.Credentials  // The credentials used by the job. These are not exposed to the plugin
 	stream            *gotelemetry.BatchStream // The batch stream used by the job. This is likewide not exposed to the plugin
 	instance          PluginInstance           // The plugin instance
-	errorChannel      *chan error              // A channel to which all errors are funneled
+	errorChannel      chan error               // A channel to which all errors are funneled
 	config            map[string]interface{}   // The configuration associated with the job
 	then              []*Job                   // Dependent jobs associated with this job
 	completionChannel chan string              // To be pinged when the job has finished running, so that the manager knows when to quit
 }
 
 // newJob creates and starts a new Job
-func newJob(credentials gotelemetry.Credentials, stream *gotelemetry.BatchStream, id string, config map[string]interface{}, then []*Job, instance PluginInstance, errorChannel *chan error, jobCompletionChannel chan string, wait bool) (*Job, error) {
+func newJob(credentials gotelemetry.Credentials, stream *gotelemetry.BatchStream, id string, config map[string]interface{}, then []*Job, instance PluginInstance, errorChannel chan error, jobCompletionChannel chan string, wait bool) (*Job, error) {
 	result := &Job{
 		ID:                id,
 		credentials:       credentials,
@@ -174,7 +174,7 @@ func (j *Job) ReportError(err error) {
 	actualError := errors.New(j.ID + ": -> " + err.Error())
 
 	if j.errorChannel != nil {
-		*j.errorChannel <- actualError
+		j.errorChannel <- actualError
 	}
 }
 
@@ -191,9 +191,9 @@ func (j *Job) Log(v ...interface{}) {
 	for _, val := range v {
 		if j.errorChannel != nil {
 			if v, ok := val.(string); ok {
-				*j.errorChannel <- gotelemetry.NewLogError("%s -> %s", j.ID, v)
+				j.errorChannel <- gotelemetry.NewLogError("%s -> %s", j.ID, v)
 			} else {
-				*j.errorChannel <- gotelemetry.NewLogError("%s -> %#v", j.ID, val)
+				j.errorChannel <- gotelemetry.NewLogError("%s -> %#v", j.ID, val)
 			}
 		}
 	}
@@ -202,13 +202,13 @@ func (j *Job) Log(v ...interface{}) {
 // Logf sends a formatted string to the agent's global log. It works like log.Logf
 func (j *Job) Logf(format string, v ...interface{}) {
 	if j.errorChannel != nil {
-		*j.errorChannel <- gotelemetry.NewLogError("%s -> %#s", j.ID, fmt.Sprintf(format, v...))
+		j.errorChannel <- gotelemetry.NewLogError("%s -> %#s", j.ID, fmt.Sprintf(format, v...))
 	}
 }
 
 // Debugf sends a formatted string to the agent's debug log, if it exists. It works like log.Logf
 func (j *Job) Debugf(format string, v ...interface{}) {
 	if j.errorChannel != nil {
-		*j.errorChannel <- gotelemetry.NewDebugError("%s -> %#s", j.ID, fmt.Sprintf(format, v...))
+		j.errorChannel <- gotelemetry.NewDebugError("%s -> %#s", j.ID, fmt.Sprintf(format, v...))
 	}
 }

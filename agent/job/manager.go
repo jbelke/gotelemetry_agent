@@ -10,11 +10,11 @@ type JobManager struct {
 	credentials          map[string]gotelemetry.Credentials
 	accountStreams       map[string]*gotelemetry.BatchStream
 	jobs                 map[string]*Job
-	completionChannel    *chan bool
+	completionChannel    chan bool
 	jobCompletionChannel chan string
 }
 
-func createJob(credentials gotelemetry.Credentials, accountStream *gotelemetry.BatchStream, errorChannel *chan error, jobDescription config.Job, jobCompletionChannel chan string, wait bool) (*Job, error) {
+func createJob(credentials gotelemetry.Credentials, accountStream *gotelemetry.BatchStream, errorChannel chan error, jobDescription config.Job, jobCompletionChannel chan string, wait bool) (*Job, error) {
 	pluginFactory, err := GetPlugin(jobDescription.Plugin)
 
 	if err != nil {
@@ -38,7 +38,7 @@ func createJob(credentials gotelemetry.Credentials, accountStream *gotelemetry.B
 	return newJob(credentials, accountStream, jobDescription.ID, jobDescription.Config, then, pluginInstance, errorChannel, jobCompletionChannel, wait)
 }
 
-func NewJobManager(jobConfig config.ConfigInterface, errorChannel *chan error, completionChannel *chan bool) (*JobManager, error) {
+func NewJobManager(jobConfig config.ConfigInterface, errorChannel chan error, completionChannel chan bool) (*JobManager, error) {
 	result := &JobManager{
 		credentials:          map[string]gotelemetry.Credentials{},
 		accountStreams:       map[string]*gotelemetry.BatchStream{},
@@ -76,7 +76,7 @@ func NewJobManager(jobConfig config.ConfigInterface, errorChannel *chan error, c
 			submissionInterval := time.Duration(account.SubmissionInterval) * time.Second
 
 			if submissionInterval < time.Second {
-				*errorChannel <- gotelemetry.NewLogError("Submission interval automatically set to 1s. You can change this value by adding a `submission_interval` property to your configuration file.")
+				errorChannel <- gotelemetry.NewLogError("Submission interval automatically set to 1s. You can change this value by adding a `submission_interval` property to your configuration file.")
 				submissionInterval = time.Second
 			}
 
@@ -145,7 +145,7 @@ func (m *JobManager) monitorDoneChannel() {
 					stream.Flush()
 				}
 
-				*m.completionChannel <- true
+				m.completionChannel <- true
 				return
 			}
 		}
