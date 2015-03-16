@@ -178,7 +178,7 @@ func (p *ProcessPlugin) analyzeAndSubmitProcessResponse(j *job.Job, response str
 }
 
 func (p *ProcessPlugin) performAllTasks(j *job.Job) {
-	j.Logf("Starting process plugin...")
+	j.Debugf("Starting process plugin...")
 
 	defer p.PluginHelper.TrackTime(j, time.Now(), "Process plugin completed in %s.")
 
@@ -198,7 +198,7 @@ func (p *ProcessPlugin) performAllTasks(j *job.Job) {
 	response := string(out)
 
 	j.Debugf("Process output: %s", strings.Replace(response, "\n", "\\n", -1))
-	j.Logf("Posting flow %s", p.flowTag)
+	j.Debugf("Posting flow %s", p.flowTag)
 
 	if err := p.analyzeAndSubmitProcessResponse(j, response); err != nil {
 		j.ReportError(errors.New("Unable to analyze process output: " + err.Error()))
