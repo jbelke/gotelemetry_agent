@@ -31,11 +31,12 @@ func ProcessPluginFactory() job.PluginInstance {
 // For configuration parameters, see the Init() function
 type ProcessPlugin struct {
 	*job.PluginHelper
-	flowTag  string
-	path     string
-	args     []string
-	template map[string]interface{}
-	flow     *gotelemetry.Flow
+	expiration time.Duration
+	flowTag    string
+	path       string
+	args       []string
+	template   map[string]interface{}
+	flow       *gotelemetry.Flow
 }
 
 // Function Init initializes the plugin.
@@ -47,6 +48,12 @@ type ProcessPlugin struct {
 // - args													An array of arguments that are sent to the executable
 //
 // - flow_tag                     The tag of the flow to populate
+//
+// - refresh                      The number of seconds between subsequent executions of the
+//                                plugin. Default: never
+//
+// - expiration										The number of seconds after which flow data is set to expire.
+//                                Default: refresh * 3; 0 = never.
 //
 // - variant                      The variant of the flow
 //
@@ -136,23 +143,45 @@ func (p *ProcessPlugin) Init(job *job.Job) error {
 		}
 	}
 
+	if expiration, ok := c["expiration"].(int); ok {
+		if expiration < 0 {
+			return errors.New("Invalid expiration time")
+		}
+
+		p.expiration = time.Duration(expiration) * time.Second
+	}
+
 	if refresh, ok := c["refresh"].(int); ok {
+		if p.expiration == 0 {
+			p.expiration = time.Duration(refresh*3) * time.Second
+		}
+
 		p.PluginHelper.AddTaskWithClosure(p.performAllTasks, time.Duration(refresh)*time.Second)
 	} else {
 		p.PluginHelper.AddTaskWithClosure(p.performAllTasks, 0)
+	}
+
+	if p.expiration > 0 {
+		job.Debugf("Expiration is set to %dµs", p.expiration)
+	} else {
+		job.Debugf("Expiration is off.")
 	}
 
 	return nil
 }
 
 func (p *ProcessPlugin) analyzeAndSubmitProcessResponse(j *job.Job, response string) error {
-	var data interface{}
+	var data map[string]interface{}
 
 	if strings.HasPrefix(response, "PATCH\n") {
 		err := json.Unmarshal([]byte(strings.TrimPrefix(response, "PATCH\n")), &data)
 
 		if err != nil {
 			return err
+		}
+
+		if p.expiration > 0 {
+			j.Logf("Warning: Forced expiration is not supported for JSON-Patch operations")
 		}
 
 		j.QueueDataUpdate(p.flowTag, data, gotelemetry.BatchTypeJSONPATCH)
@@ -163,12 +192,30 @@ func (p *ProcessPlugin) analyzeAndSubmitProcessResponse(j *job.Job, response str
 			return err
 		}
 
+		if p.expiration > 0 {
+			newExpiration := time.Now().Add(p.expiration)
+			newUnixExpiration := newExpiration.Unix()
+
+			j.Debugf("Forcing expiration to %d (%s)", newUnixExpiration, newExpiration)
+
+			data["expires_at"] = newUnixExpiration
+		}
+
 		j.QueueDataUpdate(p.flowTag, data, gotelemetry.BatchTypePOST)
 	} else {
 		err := json.Unmarshal([]byte(response), &data)
 
 		if err != nil {
 			return err
+		}
+
+		if p.expiration > 0 {
+			newExpiration := time.Now().Add(p.expiration)
+			newUnixExpiration := newExpiration.Unix()
+
+			j.Debugf("Forcing expiration to %d (%s)", newUnixExpiration, newExpiration)
+
+			data["expires_at"] = newUnixExpiration
 		}
 
 		j.QueueDataUpdate(p.flowTag, data, gotelemetry.BatchTypePATCH)

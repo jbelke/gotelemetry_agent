@@ -2,5 +2,9 @@ jobs:
   - config:
       flow_tag: test_flow
       path: ./demo.php
+      refresh: 10
       args:
         - 1320
+      variant: value
+      template:
+        value: 123
