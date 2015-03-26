@@ -238,6 +238,7 @@ func (p *ProcessPlugin) performAllTasks(j *job.Job) {
 	out, err := exec.Command(p.path, p.args...).Output()
 
 	if err != nil {
+		j.SetFlowError(p.flowTag, map[string]interface{}{"error": err.Error(), "output": string(out)})
 		j.ReportError(err)
 		return
 	}

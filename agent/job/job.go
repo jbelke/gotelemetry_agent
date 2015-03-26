@@ -178,6 +178,14 @@ func (j *Job) ReportError(err error) {
 	}
 }
 
+func (j *Job) SetFlowError(tag string, body interface{}) {
+	j.Debugf("Setting error status on flow %s", tag)
+
+	if err := gotelemetry.SetFlowError(j.credentials, tag, body); err != nil {
+		j.ReportError(err)
+	}
+}
+
 // Function PerformSubtasks runs any tasks that have been associated with the
 // `then` entry to the current task.
 func (j *Job) PerformSubtasks() {
