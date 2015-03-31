@@ -213,5 +213,5 @@ func (e *PluginHelper) Terminate(job *Job) {
 // 			defer plugin.TrackTime(job, time.Now(), "Function test took %s to run.")
 // 		}
 func (e *PluginHelper) TrackTime(job *Job, start time.Time, template string) {
-	job.Debugf(template, time.Since(start))
+	job.Logf(template, time.Since(start))
 }

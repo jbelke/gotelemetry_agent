@@ -21,7 +21,7 @@ type CLIConfigType struct {
 	Notification        gotelemetry.Notification
 }
 
-const AgentVersion = "1.2"
+const AgentVersion = "1.2.1"
 
 var CLIConfig CLIConfigType
 

@@ -37,15 +37,22 @@ type Job struct {
 	Then   []Job                  `yaml:"then"`
 }
 
+type DataConfig struct {
+	DataLocation *string `yaml:"path"`
+	DefaultTTL   *int    `yaml:"ttl"`
+}
+
 type AccountConfig struct {
-	APIKey             string  `yaml:"api_key"`
-	APIToken           string  `yaml:"api_token"`
-	SubmissionInterval float64 `yaml:"submission_interval"`
-	Jobs               []Job   `yaml:"jobs"`
+	APIKey             string     `yaml:"api_key"`
+	APIToken           string     `yaml:"api_token"`
+	Data               DataConfig `yaml:"data"`
+	SubmissionInterval float64    `yaml:"submission_interval"`
+	Jobs               []Job      `yaml:"jobs"`
 }
 
 type ConfigInterface interface {
 	Accounts() []AccountConfig
+	DataConfig() DataConfig
 }
 
 func (a AccountConfig) GetAPIKey() (string, error) {

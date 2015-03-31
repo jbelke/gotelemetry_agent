@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/telemetryapp/gotelemetry"
 	"github.com/telemetryapp/gotelemetry_agent/agent"
+	"github.com/telemetryapp/gotelemetry_agent/agent/aggregations"
 	"github.com/telemetryapp/gotelemetry_agent/agent/config"
 	"github.com/telemetryapp/gotelemetry_agent/agent/job"
 	"io/ioutil"
@@ -66,6 +67,12 @@ Done:
 }
 
 func run() {
+	err := aggregations.Init(configFile, errorChannel)
+
+	if err != nil {
+		log.Fatalf("Initialization error: %s", err)
+	}
+
 	if config.CLIConfig.IsPiping {
 		payload, err := ioutil.ReadAll(os.Stdin)
 

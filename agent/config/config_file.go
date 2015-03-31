@@ -8,6 +8,7 @@ import (
 )
 
 type ConfigFile struct {
+	Data        DataConfig
 	AllAccounts []AccountConfig
 }
 
@@ -16,7 +17,10 @@ func NewConfigFile() (*ConfigFile, error) {
 
 	if err != nil {
 		if CLIConfig.IsPiping || CLIConfig.IsNotifying {
-			return &ConfigFile{[]AccountConfig{AccountConfig{}}}, nil
+			return &ConfigFile{
+				Data:        DataConfig{},
+				AllAccounts: []AccountConfig{AccountConfig{}},
+			}, nil
 		}
 
 		return nil, errors.New(fmt.Sprintf("Unable to open configuration file at %s. Did you use --config to specify the right path?\n\n", CLIConfig.ConfigFileLocation))
@@ -26,9 +30,16 @@ func NewConfigFile() (*ConfigFile, error) {
 
 	err = yaml.Unmarshal(source, result)
 
-	return &ConfigFile{[]AccountConfig{*result}}, err
+	return &ConfigFile{
+		Data:        result.Data,
+		AllAccounts: []AccountConfig{*result},
+	}, err
 }
 
 func (c *ConfigFile) Accounts() []AccountConfig {
 	return c.AllAccounts
+}
+
+func (c *ConfigFile) DataConfig() DataConfig {
+	return c.Data
 }
