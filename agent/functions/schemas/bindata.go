@@ -25,6 +25,15 @@ func json_add_json() ([]byte, error) {
 	)
 }
 
+// json_push_json reads file data from disk.
+// It panics if something went wrong in the process.
+func json_push_json() ([]byte, error) {
+	return bindata_read(
+		"/Users/marcot/Sites/go/src/github.com/telemetryapp/gotelemetry_agent/agent/functions/schemas/json/push.json",
+		"json/push.json",
+	)
+}
+
 // Asset loads and returns the asset for the given name.
 // It returns an error if the asset could not be found or
 // could not be loaded.
@@ -38,5 +47,6 @@ func Asset(name string) ([]byte, error) {
 // _bindata is a table, holding each asset generator, mapped to its name.
 var _bindata = map[string] func() ([]byte, error) {
 	"json/add.json": json_add_json,
+	"json/push.json": json_push_json,
 
 }

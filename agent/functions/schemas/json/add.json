@@ -1,16 +1,18 @@
 {
   "id": "/add",
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "title": "Addition",
+  "title": "$add",
   "description": "Adds two values together",
   "type": "object",
   "additionalProperties": false,
   "properties": {
     "$left": {
-      "type": "number"
+      "type": "number",
+      "description": "The left operand"
     },
     "$right": {
-      "type": "number"
+      "type": "number",
+      "description": "The right operand"
     }
   },
   "required": [

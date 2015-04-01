@@ -4,14 +4,17 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/telemetryapp/gotelemetry_agent/agent/aggregations"
 	"github.com/telemetryapp/gotelemetry_agent/agent/functions/schemas"
 	"strings"
 )
 
-type functionHandler func(input interface{}) (interface{}, error)
+type functionHandler func(context *aggregations.Context, input interface{}) (interface{}, error)
 
 var functionHandlers = map[string]functionHandler{
 	"$add": addHandler,
+
+	"$push": pushHandler,
 }
 
 func validatePayload(name string, payload interface{}) error {

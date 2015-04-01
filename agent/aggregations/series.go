@@ -1,70 +1,65 @@
 package aggregations
 
 import (
-	"code.google.com/p/go-sqlite/go1/sqlite3"
-	"io"
+	"time"
 )
 
 type Series struct {
-	manager *AggregationManager
+	context *Context
 	Name    string
-	TTL     int
 }
 
-func NewSeries(manager *AggregationManager, name string, ttl int) (*Series, error) {
-	if ttl < 0 {
-		ttl = manager.ttl
-	}
-
+func createSeries(context *Context, name string) error {
 	result := &Series{
-		manager: manager,
+		context: context,
 		Name:    name,
-		TTL:     ttl,
 	}
 
 	if err := result.createTable(); err != nil {
-		return nil, err
+		return err
 	}
 
-	if err := result.setMetadata(); err != nil {
-		return nil, err
-	}
+	cachedSeries[name] = result
 
-	return result, nil
+	return nil
 }
 
-func GetSeries(manager *AggregationManager, name string, ttl int) (*Series, error) {
+var cachedSeries = map[string]*Series{}
+
+func GetSeries(context *Context, name string) (*Series, error) {
 	result := &Series{
-		manager: manager,
+		context: context,
 		Name:    name,
-		TTL:     0,
 	}
 
-	if err := manager.loadSeriesMetadata(result); err != nil {
-		if err == io.EOF {
-			return NewSeries(manager, name, ttl)
+	if _, ok := cachedSeries[name]; !ok {
+		if err := createSeries(context, name); err != nil {
+			return nil, err
 		}
-
-		return nil, err
 	}
 
 	return result, nil
 }
 
 func (s *Series) createTable() error {
-	return s.manager.withConnection(func(c *sqlite3.Conn) error {
-		if err := c.Exec("CREATE TABLE IF NOT EXISTS `" + s.Name + "` (when DATETIME NOT NULL, value FLOAT)"); err != nil {
-			return err
-		}
+	c := s.context.conn
 
-		if err := c.Exec("CREATE INDEX IF NOT EXISTS `" + s.Name + "_index` ON " + s.Name + " (when)"); err != nil {
-			return err
-		}
+	if err := c.Exec("CREATE TABLE IF NOT EXISTS `" + s.Name + "` (timestamp DATETIME NOT NULL, value FLOAT)"); err != nil {
+		return err
+	}
 
-		return nil
-	})
+	if err := c.Exec("CREATE INDEX IF NOT EXISTS `" + s.Name + "_index` ON " + s.Name + " (timestamp)"); err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func (s *Series) setMetadata() error {
-	return s.manager.saveSeriesMetadata(s)
+func (s *Series) Push(timestamp *time.Time, value float64) error {
+	if timestamp == nil {
+		timestamp = &time.Time{}
+		*timestamp = time.Now()
+	}
+
+	return s.context.conn.Exec("INSERT INTO `"+s.Name+"` (timestamp, value) VALUES (?, ?)", *timestamp, value)
 }

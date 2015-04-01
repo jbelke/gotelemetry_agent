@@ -87,4 +87,6 @@ func loadSchema(name string) *gojsonschema.JsonSchemaDocument {
 
 func init() {
 	Schemas["$add"] = loadSchema("json/add.json")
+
+	Schemas["$push"] = loadSchema("json/push.json")
 }

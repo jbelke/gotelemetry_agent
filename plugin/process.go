@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/telemetryapp/gotelemetry"
+	"github.com/telemetryapp/gotelemetry_agent/agent/aggregations"
+	"github.com/telemetryapp/gotelemetry_agent/agent/functions"
 	"github.com/telemetryapp/gotelemetry_agent/agent/job"
 	"os"
 	"os/exec"
@@ -171,27 +173,76 @@ func (p *ProcessPlugin) Init(job *job.Job) error {
 }
 
 func (p *ProcessPlugin) analyzeAndSubmitProcessResponse(j *job.Job, response string) error {
-	var data map[string]interface{}
+	isJSONPatch := false
+	isReplace := false
 
-	if strings.HasPrefix(response, "PATCH\n") {
-		err := json.Unmarshal([]byte(strings.TrimPrefix(response, "PATCH\n")), &data)
+	if strings.HasPrefix(response, "REPLACE\n") {
+		isReplace = true
+		response = strings.TrimPrefix(response, "REPLACE\n")
+	} else if strings.HasPrefix(response, "PATCH\n") {
+		isJSONPatch = true
+		response = strings.TrimPrefix(response, "PATCH\n")
+	}
+
+	context, err := aggregations.GetContext()
+
+	if err != nil {
+		return err
+	}
+
+	defer context.Close()
+
+	hasData := false
+	data := map[string]interface{}{}
+
+	for _, command := range strings.Split(response, "\n") {
+		commandData := map[string]interface{}{}
+
+		command = strings.TrimSpace(command)
+
+		if command == "" {
+			continue
+		}
+
+		err := json.Unmarshal([]byte(command), &commandData)
 
 		if err != nil {
+			context.SetError()
 			return err
 		}
 
+		if d, err := functions.Parse(context, commandData); err == nil {
+			switch d.(type) {
+			case map[string]interface{}:
+				if hasData {
+					return errors.New("Multiple data-bearing commands detected.")
+				}
+
+				data = d.(map[string]interface{})
+				hasData = true
+
+			default:
+				// Do nothing
+			}
+
+		} else {
+			context.SetError()
+			return err
+		}
+	}
+
+	if !hasData {
+		j.Debugf("No data-bearing command found. Skipping API operations")
+		return nil
+	}
+
+	if isJSONPatch {
 		if p.expiration > 0 {
 			j.Logf("Warning: Forced expiration is not supported for JSON-Patch operations")
 		}
 
 		j.QueueDataUpdate(p.flowTag, data, gotelemetry.BatchTypeJSONPATCH)
-	} else if strings.HasPrefix(response, "REPLACE\n") {
-		err := json.Unmarshal([]byte(strings.TrimPrefix(response, "REPLACE\n")), &data)
-
-		if err != nil {
-			return err
-		}
-
+	} else if isReplace {
 		if p.expiration > 0 {
 			newExpiration := time.Now().Add(p.expiration)
 			newUnixExpiration := newExpiration.Unix()
@@ -203,12 +254,6 @@ func (p *ProcessPlugin) analyzeAndSubmitProcessResponse(j *job.Job, response str
 
 		j.QueueDataUpdate(p.flowTag, data, gotelemetry.BatchTypePOST)
 	} else {
-		err := json.Unmarshal([]byte(response), &data)
-
-		if err != nil {
-			return err
-		}
-
 		if p.expiration > 0 {
 			newExpiration := time.Now().Add(p.expiration)
 			newUnixExpiration := newExpiration.Unix()

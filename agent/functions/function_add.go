@@ -1,6 +1,10 @@
 package functions
 
-func addHandler(input interface{}) (interface{}, error) {
+import (
+	"github.com/telemetryapp/gotelemetry_agent/agent/aggregations"
+)
+
+func addHandler(context *aggregations.Context, input interface{}) (interface{}, error) {
 	if err := validatePayload("$add", input); err != nil {
 		return nil, err
 	}
