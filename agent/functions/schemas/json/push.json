@@ -2,6 +2,7 @@
   "id": "/push",
   "$schema": "http://json-schema.org/draft-04/schema#",
   "title": "$push",
+  "group": "Aggregations and Timeseries",
   "description": "Appends a value to a data series",
   "type": "object",
   "additionalProperties": false,

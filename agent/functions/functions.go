@@ -11,11 +11,7 @@ import (
 
 type functionHandler func(context *aggregations.Context, input interface{}) (interface{}, error)
 
-var functionHandlers = map[string]functionHandler{
-	"$add": addHandler,
-
-	"$push": pushHandler,
-}
+var functionHandlers = map[string]functionHandler{}
 
 func validatePayload(name string, payload interface{}) error {
 	if schema, ok := schemas.Schemas[name]; ok {

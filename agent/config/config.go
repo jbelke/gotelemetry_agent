@@ -19,6 +19,8 @@ type CLIConfigType struct {
 	IsNotifying         bool
 	NotificationChannel string
 	Notification        gotelemetry.Notification
+	WantsFunctionHelp   bool
+	FunctionHelpName    string
 }
 
 const AgentVersion = "1.2.1"
@@ -60,6 +62,9 @@ func init() {
 	notify.Flag("duration", "The amount of milliseconds for which the notification must be displayed.").Default("1000").IntVar(&CLIConfig.Notification.Duration)
 	notify.Flag("sound", "A URL to a notification sound (use `default` for Telemetry's default notification sound).").StringVar(&CLIConfig.Notification.SoundURL)
 
+	functions := app.Command("functions", "Print function help.")
+	functions.Flag("name", "The name of the function whose help should be printed. If not specified, a list of available functions is printed.").StringVar(&CLIConfig.FunctionHelpName)
+
 	run := app.Command("run", "Runs the jobs scheduled in the configuration file provided.")
 
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
@@ -71,6 +76,9 @@ func init() {
 
 	case notify.FullCommand():
 		CLIConfig.IsNotifying = true
+
+	case functions.FullCommand():
+		CLIConfig.WantsFunctionHelp = true
 
 	case run.FullCommand():
 	default:

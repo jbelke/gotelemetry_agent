@@ -5,6 +5,7 @@ import (
 	"github.com/telemetryapp/gotelemetry_agent/agent"
 	"github.com/telemetryapp/gotelemetry_agent/agent/aggregations"
 	"github.com/telemetryapp/gotelemetry_agent/agent/config"
+	"github.com/telemetryapp/gotelemetry_agent/agent/functions"
 	"github.com/telemetryapp/gotelemetry_agent/agent/job"
 	"io/ioutil"
 	"log"
@@ -18,6 +19,11 @@ var errorChannel chan error
 var completionChannel chan bool
 
 func main() {
+	if config.CLIConfig.WantsFunctionHelp {
+		functions.PrintHelp(config.CLIConfig.FunctionHelpName)
+		return
+	}
+
 	var err error
 
 	configFile, err = config.NewConfigFile()

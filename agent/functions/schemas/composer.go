@@ -6,6 +6,7 @@ import (
 )
 
 var Schemas = map[string]*gojsonschema.JsonSchemaDocument{}
+var RawSchemas = map[string]map[string]interface{}{}
 
 func resolveReferencesSlice(schema []interface{}) []interface{} {
 	for key, value := range schema {
@@ -70,8 +71,8 @@ func resolveSchema(name string) (res map[string]interface{}, raw []byte) {
 	return
 }
 
-func loadSchema(name string) *gojsonschema.JsonSchemaDocument {
-	schemaMap, rawSchema := resolveSchema(name)
+func LoadSchema(name string) {
+	schemaMap, rawSchema := resolveSchema("json/" + name + ".json")
 
 	schema, err := gojsonschema.NewJsonSchemaDocument(schemaMap)
 
@@ -82,11 +83,6 @@ func loadSchema(name string) *gojsonschema.JsonSchemaDocument {
 		panic(err.Error())
 	}
 
-	return schema
-}
-
-func init() {
-	Schemas["$add"] = loadSchema("json/add.json")
-
-	Schemas["$push"] = loadSchema("json/push.json")
+	Schemas["$"+name] = schema
+	RawSchemas["$"+name] = schemaMap
 }

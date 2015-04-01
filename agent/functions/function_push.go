@@ -2,8 +2,14 @@ package functions
 
 import (
 	"github.com/telemetryapp/gotelemetry_agent/agent/aggregations"
+	"github.com/telemetryapp/gotelemetry_agent/agent/functions/schemas"
 	"time"
 )
+
+func init() {
+	schemas.LoadSchema("push")
+	functionHandlers["$push"] = pushHandler
+}
 
 func pushHandler(context *aggregations.Context, input interface{}) (interface{}, error) {
 	if err := validatePayload("$push", input); err != nil {
@@ -15,10 +21,10 @@ func pushHandler(context *aggregations.Context, input interface{}) (interface{},
 	seriesName := data["$series"].(string)
 	value := data["$value"].(float64)
 
-	var when *time.Time
+	var ts *time.Time
 
-	if w, ok := data["$when"]; ok {
-		*when = time.Unix(w.(int64), 0)
+	if w, ok := data["$ts"]; ok {
+		*ts = time.Unix(w.(int64), 0)
 	}
 
 	series, err := aggregations.GetSeries(context, seriesName)
@@ -27,7 +33,7 @@ func pushHandler(context *aggregations.Context, input interface{}) (interface{},
 		return nil, err
 	}
 
-	series.Push(when, value)
+	err = series.Push(ts, value)
 
-	return nil, nil
+	return nil, err
 }

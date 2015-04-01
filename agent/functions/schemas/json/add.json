@@ -2,6 +2,11 @@
   "id": "/add",
   "$schema": "http://json-schema.org/draft-04/schema#",
   "title": "$add",
+  "group": "Math Functions",
+  "return": {
+    "type": "number",
+    "description": "The result of the addition"
+  },
   "description": "Adds two values together",
   "type": "object",
   "additionalProperties": false,

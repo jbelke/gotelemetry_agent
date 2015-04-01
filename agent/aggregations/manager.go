@@ -41,6 +41,8 @@ func Init(cfg config.ConfigInterface, errorChannel chan error) error {
 
 		c.Debugf("Writing data layer database to %s", manager.path)
 		c.Debugf("Default data layer TTL is set to %d", manager.ttl)
+
+		return nil
 	}
 
 	errorChannel <- gotelemetry.NewLogError("Data Manager -> No `data.path` property provided. The Data Manager will not run.")
