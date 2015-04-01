@@ -11,16 +11,16 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "$left": {
+    "left": {
       "type": "number",
       "description": "The left operand"
     },
-    "$right": {
+    "right": {
       "type": "number",
       "description": "The right operand"
     }
   },
   "required": [
-    "$left", "$right"
+    "left", "right"
   ]
 }

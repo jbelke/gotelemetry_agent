@@ -25,6 +25,33 @@ func json_add_json() ([]byte, error) {
 	)
 }
 
+// json_compute_json reads file data from disk.
+// It panics if something went wrong in the process.
+func json_compute_json() ([]byte, error) {
+	return bindata_read(
+		"/Users/marcot/Sites/go/src/github.com/telemetryapp/gotelemetry_agent/agent/functions/schemas/json/compute.json",
+		"json/compute.json",
+	)
+}
+
+// json_last_json reads file data from disk.
+// It panics if something went wrong in the process.
+func json_last_json() ([]byte, error) {
+	return bindata_read(
+		"/Users/marcot/Sites/go/src/github.com/telemetryapp/gotelemetry_agent/agent/functions/schemas/json/last.json",
+		"json/last.json",
+	)
+}
+
+// json_pick_json reads file data from disk.
+// It panics if something went wrong in the process.
+func json_pick_json() ([]byte, error) {
+	return bindata_read(
+		"/Users/marcot/Sites/go/src/github.com/telemetryapp/gotelemetry_agent/agent/functions/schemas/json/pick.json",
+		"json/pick.json",
+	)
+}
+
 // json_pop_json reads file data from disk.
 // It panics if something went wrong in the process.
 func json_pop_json() ([]byte, error) {
@@ -56,6 +83,9 @@ func Asset(name string) ([]byte, error) {
 // _bindata is a table, holding each asset generator, mapped to its name.
 var _bindata = map[string] func() ([]byte, error) {
 	"json/add.json": json_add_json,
+	"json/compute.json": json_compute_json,
+	"json/last.json": json_last_json,
+	"json/pick.json": json_pick_json,
 	"json/pop.json": json_pop_json,
 	"json/push.json": json_push_json,
 

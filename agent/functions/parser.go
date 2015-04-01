@@ -22,7 +22,11 @@ func Parse(context *aggregations.Context, input interface{}) (interface{}, error
 				}
 
 				if handler, ok := functionHandlers[index]; ok {
-					return handler(context, value)
+					if value, err := Parse(context, value); err == nil {
+						return handler(context, value)
+					} else {
+						return nil, err
+					}
 				} else {
 					return nil, errors.New("Function " + index + " not found.")
 				}

@@ -1,0 +1,26 @@
+{
+  "id": "/pick",
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "$pick",
+  "group": "Utility Functions",
+  "description": "Extracts the value for a named property from a hash",
+  "return": {
+    "type": "any",
+    "description": "The value of the requested property"
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "prop": {
+      "type": "string",
+      "description": "The name of the proeprty whose value to return"
+    },
+    "from": {
+      "type": "object",
+      "description": "The object from where to extract the data"
+    }
+  },
+  "required": [
+    "prop", "from"
+  ]
+}

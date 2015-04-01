@@ -7,20 +7,20 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
-  	"$series": {
+  	"series": {
   		"type": "string",
   		"description": "The name of the series to which the value is to be appended"
   	},
-    "$value": {
+    "value": {
       "type": "number",
       "description": "The value to be appended"
     },
-    "$when": {
+    "when": {
       "type": "integer",
       "description": "The time at which the data point should be recorded"
     }
   },
   "required": [
-    "$series", "$value"
+    "series", "value"
   ]
 }

@@ -1,12 +1,12 @@
 {
-  "id": "/pop",
+  "id": "/last",
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "title": "$pop",
+  "title": "$last",
   "group": "Aggregations and Timeseries",
   "description": "Removes the last value from a data series",
   "return": {
     "type": "object",
-    "description": "The value that was removed from the series",
+    "description": "The last value in the series",
     "properties": {
       "ts": {
         "type": "integer",
@@ -25,14 +25,10 @@
       "type": "string",
       "description": "The name of the series to which the value is to be appended"
     },
-    "condition": {
-      "type": "boolean",
-      "description": "If provided, the pop operation will only take place if this value is `true`"
-    },
     "default": {
       "type": "object",
       "description": "A default hash to return when the series is empty"
-    }  
+    }
   },
   "required": [
     "series"

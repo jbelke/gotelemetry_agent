@@ -18,12 +18,12 @@ func pushHandler(context *aggregations.Context, input interface{}) (interface{},
 
 	data := input.(map[string]interface{})
 
-	seriesName := data["$series"].(string)
-	value := data["$value"].(float64)
+	seriesName := data["series"].(string)
+	value := data["value"].(float64)
 
 	var ts *time.Time
 
-	if w, ok := data["$ts"]; ok {
+	if w, ok := data["ts"]; ok {
 		*ts = time.Unix(w.(int64), 0)
 	}
 

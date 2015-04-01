@@ -7,12 +7,12 @@ import (
 )
 
 func init() {
-	schemas.LoadSchema("pop")
-	functionHandlers["$pop"] = popHandler
+	schemas.LoadSchema("last")
+	functionHandlers["$last"] = lastHandler
 }
 
-func popHandler(context *aggregations.Context, input interface{}) (interface{}, error) {
-	if err := validatePayload("$pop", input); err != nil {
+func lastHandler(context *aggregations.Context, input interface{}) (interface{}, error) {
+	if err := validatePayload("$last", input); err != nil {
 		return nil, err
 	}
 
@@ -20,19 +20,13 @@ func popHandler(context *aggregations.Context, input interface{}) (interface{}, 
 
 	seriesName := data["series"].(string)
 
-	condition, ok := data["condition"].(bool)
-
-	if !ok {
-		condition = true
-	}
-
 	series, err := aggregations.GetSeries(context, seriesName)
 
 	if err != nil {
 		return nil, err
 	}
 
-	result, err := series.Pop(condition)
+	result, err := series.Last()
 
 	if err != nil {
 		if err == io.EOF {
