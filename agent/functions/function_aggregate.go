@@ -9,12 +9,12 @@ import (
 )
 
 func init() {
-	schemas.LoadSchema("compute")
-	functionHandlers["$compute"] = computeHandler
+	schemas.LoadSchema("aggregate")
+	functionHandlers["$aggregate"] = aggregateHandler
 }
 
-func computeHandler(context *aggregations.Context, input interface{}) (interface{}, error) {
-	if err := validatePayload("$compute", input); err != nil {
+func aggregateHandler(context *aggregations.Context, input interface{}) (interface{}, error) {
+	if err := validatePayload("$aggregate", input); err != nil {
 		return nil, err
 	}
 
@@ -72,5 +72,5 @@ func computeHandler(context *aggregations.Context, input interface{}) (interface
 		return nil, err
 	}
 
-	return series.Compute(op, start, end)
+	return series.Aggregate(op, int(data["interval"].(float64)), int(data["count"].(float64)))
 }

@@ -30,9 +30,9 @@ func printFunctionList() {
 		group[index] = schema
 	}
 
-	writer := tablewriter.NewWriter(os.Stdout)
-
 	for groupName, group := range groups {
+		writer := tablewriter.NewWriter(os.Stdout)
+
 		fmt.Printf("\n%s\n---------------------------------\n\n", groupName)
 
 		for index, schema := range group {

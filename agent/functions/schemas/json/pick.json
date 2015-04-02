@@ -16,8 +16,19 @@
       "description": "The name of the proeprty whose value to return"
     },
     "from": {
-      "type": "object",
-      "description": "The object from where to extract the data"
+      "oneOf": [
+        {
+          "type": "object",
+          "description": "The object from where to extract the data"
+        },
+        {
+          "type": "array",
+          "description": "An array of object from where to extract the data"
+        }
+      ]
+    },
+    "default": {
+      "description": "A default value to use when the requested property cannot be found"
     }
   },
   "required": [

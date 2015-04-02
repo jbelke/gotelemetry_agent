@@ -1,0 +1,51 @@
+{
+  "id": "/aggregate",
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "$aggregate",
+  "group": "Aggregations and Timeseries",
+  "description": "Computes an operation over certain aggregate values from a series",
+  "return": {
+    "type": "[object]",
+    "description": "The result of the requested aggregation",
+    "properties": {
+      "ts": {
+        "type": "integer",
+        "description": "The UNIX timestamp of each aggregated data point"
+      },
+      "value": {
+        "type": "number",
+        "description": "The aggregated data point"
+      }
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "op": {
+      "type": "string",
+      "description": "The operation to be computed",
+      "enum": [
+        "sum",
+        "avg",
+        "max",
+        "min",
+        "count"
+      ]
+    },
+    "series": {
+      "type": "string",
+      "description": "The name of the series to which the value is to be appended"
+    },
+    "interval": {
+      "type": "integer",
+      "description": "The interval in seconds at which data is aggregated"
+    },
+    "count": {
+      "type": "integer",
+      "description": "The number of intervals to aggregate"
+    }
+  },
+  "required": [
+    "op", "series", "interval", "count"
+  ]
+}
